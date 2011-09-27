@@ -167,7 +167,7 @@ public class CycloidPanel extends JPanel
         JPanel percentPanel = new JPanel(new FlowLayout());
         percentPanel.add(percentLabel);
         percentText = new JTextField(6);
-        percentText.setText("100.0");
+        percentText.setText("110.0");
         percentText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 drawPanel.setPercent(Double.parseDouble(percentText.getText()));

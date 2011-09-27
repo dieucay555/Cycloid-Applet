@@ -66,7 +66,7 @@ public class Cycloid extends JPanel {
         cHeight = 20.0;
         R = 0.0;
         r = 0.0;
-        percent = 100.0;
+        percent = 110.0;
         g_xs = 1.0;
         g_ys = 1.0;
         minX = 0.0;
