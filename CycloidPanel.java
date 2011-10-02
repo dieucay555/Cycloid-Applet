@@ -7,7 +7,9 @@ import java.awt.event.*;
 public class CycloidPanel extends JPanel
     implements ActionListener {
 
-    private Cycloid drawPanel;
+    private JTabbedPane drawPane;
+    private Cycloid cycloidPanel;
+    private Catenary catenaryPanel;
 
     private JButton createCycloid;
     private JButton clearCycloid;
@@ -84,11 +86,15 @@ public class CycloidPanel extends JPanel
         clearCycloid.setActionCommand(CLEAR_COMMAND);
         clearCycloid.addActionListener(this);
 
-        // Set top panel for drawing
-        drawPanel = new Cycloid();
-        drawPanel.setDoubleBuffered(true);
-//        drawPanel.setSize(600, 400);
-        add(drawPanel, BorderLayout.CENTER);
+        // Use JTabbedPane to display both Cycloid and Catenary under separate tabs
+        drawPane = new JTabbedPane();
+        cycloidPanel = new Cycloid();
+        cycloidPanel.setDoubleBuffered(true);
+        drawPane.addTab("Cycloid", null, cycloidPanel, "Draws Cycloid");
+        catenaryPanel = new Catenary();
+        catenaryPanel.setDoubleBuffered(true);
+        drawPane.addTab("Catenary", null, catenaryPanel, "Draws Catenary");
+        add(drawPane, BorderLayout.CENTER);
 
         JPanel topPanel = new JPanel(new BorderLayout());
         JPanel topLeftPanel = new JPanel(new BorderLayout());
@@ -115,16 +121,21 @@ public class CycloidPanel extends JPanel
         widthText = new JTextField(6);
         widthText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                drawPanel.repaint();
+                cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
+                cycloidPanel.repaint();
+                catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
+                catenaryPanel.repaint();
             }
             public void removeUpdate(DocumentEvent e) {
                 // prevent NullPointerException when a user erases all text in the field
                 if (widthText.getText().length() == 0) {
-                    drawPanel.setCycloidWidth(0.00);
+                    cycloidPanel.setCycloidWidth(0.00);
+                    catenaryPanel.setCatenaryLength(0.00);
                 } else {
-                    drawPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                    drawPanel.repaint();
+                    cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
+                    cycloidPanel.repaint();
+                    catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
+                    catenaryPanel.repaint();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -137,15 +148,20 @@ public class CycloidPanel extends JPanel
         heightText = new JTextField(6);
         heightText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                drawPanel.repaint();
+                cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
+                cycloidPanel.repaint();
+                catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
+                catenaryPanel.repaint();
             }
             public void removeUpdate(DocumentEvent e) {
                 if (heightText.getText().length() == 0) {
-                    drawPanel.setCycloidHeight(0.00);
+                    cycloidPanel.setCycloidHeight(0.00);
+                    catenaryPanel.setCatenaryDepth(0.00);
                 } else {
-                    drawPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                    drawPanel.repaint();
+                    cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
+                    cycloidPanel.repaint();
+                    catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
+                    catenaryPanel.repaint();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -170,15 +186,20 @@ public class CycloidPanel extends JPanel
         percentText.setText("110.0");
         percentText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setPercent(Double.parseDouble(percentText.getText()));
-                drawPanel.repaint();
+                cycloidPanel.setPercent(Double.parseDouble(percentText.getText()));
+                cycloidPanel.repaint();
+                catenaryPanel.setPercent(Double.parseDouble(percentText.getText()));
+                catenaryPanel.repaint();
             }
             public void removeUpdate(DocumentEvent e) {
                 if (percentText.getText().length() == 0) {
-                    drawPanel.setPercent(0.00);
+                    cycloidPanel.setPercent(0.00);
+                    catenaryPanel.setPercent(0.00);
                 } else {
-                    drawPanel.setPercent(Double.parseDouble(percentText.getText()));
-                    drawPanel.repaint();
+                    cycloidPanel.setPercent(Double.parseDouble(percentText.getText()));
+                    cycloidPanel.repaint();
+                    catenaryPanel.setPercent(Double.parseDouble(percentText.getText()));
+                    catenaryPanel.repaint();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -215,13 +236,16 @@ public class CycloidPanel extends JPanel
         titleText = new JTextField(40);
         titleText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setTitle(titleText.getText());
+                cycloidPanel.setTitle(titleText.getText());
+                catenaryPanel.setTitle(titleText.getText());
             }
             public void removeUpdate(DocumentEvent e) {
                 if (titleText.getText().length() == 0) {
-                    drawPanel.setTitle("");
+                    cycloidPanel.setTitle("");
+                    catenaryPanel.setTitle("");
                 } else {
-                    drawPanel.setTitle(titleText.getText());
+                    cycloidPanel.setTitle(titleText.getText());
+                    catenaryPanel.setTitle(titleText.getText());
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -297,15 +321,20 @@ public class CycloidPanel extends JPanel
         scaleWidthText = new JTextField(6);
         scaleWidthText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                drawPanel.repaint();
+                cycloidPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
+                cycloidPanel.repaint();
+                catenaryPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
+                catenaryPanel.repaint();
             }
             public void removeUpdate(DocumentEvent e) {
                 if (scaleWidthText.getText().length() == 0) {
-                    drawPanel.setScaleWidth(1.00);
+                    cycloidPanel.setScaleWidth(1.00);
+                    catenaryPanel.setScaleWidth(1.00);
                 } else {
-                    drawPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                    drawPanel.repaint();
+                    cycloidPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
+                    cycloidPanel.repaint();
+                    catenaryPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
+                    catenaryPanel.repaint();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -318,15 +347,20 @@ public class CycloidPanel extends JPanel
         scaleHeightText = new JTextField(6);
         scaleHeightText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                drawPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                drawPanel.repaint();
+                cycloidPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
+                cycloidPanel.repaint();
+                catenaryPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
+                catenaryPanel.repaint();
             }
             public void removeUpdate(DocumentEvent e) {
                 if (scaleHeightText.getText().length() == 0) {
-                    drawPanel.setScaleHeight(1.00);
+                    cycloidPanel.setScaleHeight(1.00);
+                    catenaryPanel.setScaleHeight(1.00);
                 } else {
-                    drawPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                    drawPanel.repaint();
+                    cycloidPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
+                    cycloidPanel.repaint();
+                    catenaryPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
+                    catenaryPanel.repaint();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -356,19 +390,10 @@ public class CycloidPanel extends JPanel
 
         if (source == captionEnable) {
             captionEnabled = selected;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("Caption enabled"));
-            }
         } else if (source == redrawEnable) {
             redrawEnabled = selected;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("Redraw enabled"));
-            }
         } else if (source == autoFileNameEnable) {
             autoFileNameEnabled = selected;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("AutoFileName enabled"));
-            }
         }
     }
 
@@ -376,73 +401,27 @@ public class CycloidPanel extends JPanel
         String command = e.getActionCommand();
 
         if (CREATE_COMMAND.equals(command)) {
-            if (DEBUG) {
-                drawPanel.add(new JLabel("Creating cycloid..."));
-            }
         } else if (CLEAR_COMMAND.equals(command)) {
-            if (DEBUG) {
-                drawPanel.removeAll();
-            }
         } else if (MM_COMMAND.equals(command)) {
             metricSelected = Metric.MM;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("MM selected"));
-            }
-            // redraw
         } else if (INCH_COMMAND.equals(command)) {
             metricSelected = Metric.INCH;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("INCH selected"));
-            }
-            // redraw
         } else if (LETTER_COMMAND.equals(command)) {
             paperSelected = PaperSize.LETTER;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("LETTER selected"));
-            }
-            // redraw
         } else if (LEGAL_COMMAND.equals(command)) {
             paperSelected = PaperSize.LEGAL;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("LEGAL selected"));
-            }
-            // redraw
         } else if (A4_COMMAND.equals(command)) {
             paperSelected = PaperSize.A4;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("A4 seleted"));
-            }
-            // redraw
         } else if (A3_COMMAND.equals(command)) {
             paperSelected = PaperSize.A3;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("A3 selected"));
-            }
-            // redraw
         } else if (PDF_COMMAND.equals(command)) {
             formatSelected = Format.PDF;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("PDF selected"));
-            }
-            // redraw
         } else if (PS_COMMAND.equals(command)) {
             formatSelected = Format.PS;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("PS selected"));
-            }
-            // redraw
         } else if (DXF_COMMAND.equals(command)) {
             formatSelected = Format.DXF;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("DXF selected"));
-            }
-            // redraw
         } else if (CSV_COMMAND.equals(command)) {
             formatSelected = Format.CSV;
-            if (DEBUG) {
-                drawPanel.add(new JLabel("CSV selected"));
-            }
-            // redraw
         }
         // debug only
         validate();
