@@ -102,6 +102,7 @@ public class Catenary extends JPanel {
 
         for (int i=0; i<=res; i++) {
             double t = 2*cDepth*i/res-cDepth;
+            t *= tmpPercent; // not sure but need to double check
             double x = CatenaryX(t);
             double y = CatenaryY(t);
             if (x < minX) minX = x;
