@@ -69,7 +69,7 @@ public class CycloidPanel extends JPanel
     private Format formatSelected = Format.PDF;
 
     private boolean captionEnabled = false;
-    private boolean redrawEnabled = false;
+    private boolean redrawEnabled = true;
     private boolean autoFileNameEnabled = false;
 
     // set to false when stable
@@ -122,9 +122,11 @@ public class CycloidPanel extends JPanel
         widthText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                cycloidPanel.repaint();
                 catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
-                catenaryPanel.repaint();
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 // prevent NullPointerException when a user erases all text in the field
@@ -133,9 +135,11 @@ public class CycloidPanel extends JPanel
                     catenaryPanel.setCatenaryLength(0.00);
                 } else {
                     cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                    cycloidPanel.repaint();
                     catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
-                    catenaryPanel.repaint();
+                    if (redrawEnabled) {
+                        cycloidPanel.repaint();
+                        catenaryPanel.repaint();
+                    }
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -149,9 +153,11 @@ public class CycloidPanel extends JPanel
         heightText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                cycloidPanel.repaint();
                 catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
-                catenaryPanel.repaint();
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 if (heightText.getText().length() == 0) {
@@ -159,9 +165,11 @@ public class CycloidPanel extends JPanel
                     catenaryPanel.setCatenaryDepth(0.00);
                 } else {
                     cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                    cycloidPanel.repaint();
                     catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
-                    catenaryPanel.repaint();
+                    if (redrawEnabled) {
+                        cycloidPanel.repaint();
+                        catenaryPanel.repaint();
+                    }
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -187,9 +195,11 @@ public class CycloidPanel extends JPanel
         percentText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 cycloidPanel.setPercent(Double.parseDouble(percentText.getText()));
-                cycloidPanel.repaint();
                 catenaryPanel.setPercent(Double.parseDouble(percentText.getText()));
-                catenaryPanel.repaint();
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 if (percentText.getText().length() == 0) {
@@ -197,9 +207,11 @@ public class CycloidPanel extends JPanel
                     catenaryPanel.setPercent(0.00);
                 } else {
                     cycloidPanel.setPercent(Double.parseDouble(percentText.getText()));
-                    cycloidPanel.repaint();
                     catenaryPanel.setPercent(Double.parseDouble(percentText.getText()));
-                    catenaryPanel.repaint();
+                    if (redrawEnabled) {
+                        cycloidPanel.repaint();
+                        catenaryPanel.repaint();
+                    }
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -209,7 +221,21 @@ public class CycloidPanel extends JPanel
 
         // Caption/Redraw checkboxes
         captionEnable = new JCheckBox("Caption");
-        redrawEnable = new JCheckBox("Redraw");
+        captionEnable.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                captionEnabled = e.getStateChange() == ItemEvent.SELECTED;
+            }
+            });
+        redrawEnable = new JCheckBox("Redraw", null, true);
+        redrawEnable.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                redrawEnabled = e.getStateChange() == ItemEvent.SELECTED;
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
+            }
+            });
         JPanel crPanel = new JPanel(new BorderLayout());
         crPanel.add(captionEnable, BorderLayout.NORTH);
         crPanel.add(redrawEnable, BorderLayout.SOUTH);
@@ -217,6 +243,12 @@ public class CycloidPanel extends JPanel
 
         // auto filename checkbox and textbox and title
         autoFileNameEnable = new JCheckBox("Auto File Name");
+        autoFileNameEnable.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                autoFileNameEnabled = e.getStateChange() == ItemEvent.SELECTED;
+                // generate filename to use
+            }
+            });
         JLabel fileNameLabel = new JLabel("File name");
         fileNameText = new JTextField(20);
         JPanel nameLeftPanel = new JPanel(new FlowLayout());
@@ -258,7 +290,7 @@ public class CycloidPanel extends JPanel
         // size panel
         JPanel sizePanel = new JPanel(new BorderLayout());
         JPanel paperSizePanel = new JPanel(new FlowLayout());
-        letterSizeButton = new JRadioButton("Letter");
+        letterSizeButton = new JRadioButton("Letter", true);
         letterSizeButton.setActionCommand(LETTER_COMMAND);
         letterSizeButton.addActionListener(this);
         legalSizeButton = new JRadioButton("Legal");
@@ -285,7 +317,7 @@ public class CycloidPanel extends JPanel
 
         // file format panel
         JPanel formatPanel = new JPanel(new FlowLayout());
-        pdfButton = new JRadioButton("PDF");
+        pdfButton = new JRadioButton("PDF", true);
         pdfButton.setActionCommand(PDF_COMMAND);
         pdfButton.addActionListener(this);
         psButton = new JRadioButton("PS");
@@ -322,9 +354,11 @@ public class CycloidPanel extends JPanel
         scaleWidthText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 cycloidPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                cycloidPanel.repaint();
                 catenaryPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                catenaryPanel.repaint();
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 if (scaleWidthText.getText().length() == 0) {
@@ -332,9 +366,11 @@ public class CycloidPanel extends JPanel
                     catenaryPanel.setScaleWidth(1.00);
                 } else {
                     cycloidPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                    cycloidPanel.repaint();
                     catenaryPanel.setScaleWidth(Double.parseDouble(scaleWidthText.getText()));
-                    catenaryPanel.repaint();
+                    if (redrawEnabled) {
+                        cycloidPanel.repaint();
+                        catenaryPanel.repaint();
+                    }
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -348,9 +384,11 @@ public class CycloidPanel extends JPanel
         scaleHeightText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 cycloidPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                cycloidPanel.repaint();
                 catenaryPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                catenaryPanel.repaint();
+                if (redrawEnabled) {
+                    cycloidPanel.repaint();
+                    catenaryPanel.repaint();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 if (scaleHeightText.getText().length() == 0) {
@@ -358,9 +396,11 @@ public class CycloidPanel extends JPanel
                     catenaryPanel.setScaleHeight(1.00);
                 } else {
                     cycloidPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                    cycloidPanel.repaint();
                     catenaryPanel.setScaleHeight(Double.parseDouble(scaleHeightText.getText()));
-                    catenaryPanel.repaint();
+                    if (redrawEnabled) {
+                        cycloidPanel.repaint();
+                        catenaryPanel.repaint();
+                    }
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -382,19 +422,6 @@ public class CycloidPanel extends JPanel
         topPanel.add(topRightPanel, BorderLayout.EAST);
         topPanel.add(settingsPanel, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.SOUTH);
-    }
-
-    public void itemStateChanged(ItemEvent e) {
-        Object source = e.getItemSelectable();
-        boolean selected = (e.getStateChange() == ItemEvent.SELECTED);
-
-        if (source == captionEnable) {
-            captionEnabled = selected;
-        } else if (source == redrawEnable) {
-            redrawEnabled = selected;
-        } else if (source == autoFileNameEnable) {
-            autoFileNameEnabled = selected;
-        }
     }
 
     public void actionPerformed(ActionEvent e) {
