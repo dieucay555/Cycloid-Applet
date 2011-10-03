@@ -1,3 +1,4 @@
+import java.io.File;
 import java.lang.Math;
 import java.util.ArrayList;
 
@@ -19,6 +20,9 @@ public class Catenary extends JPanel {
     private double minY;
     private double maxY;
     private double sc;
+    private Metric metric;
+    private PaperSize paperSize;
+    private Format format;
 
     private Points points;
 
@@ -34,6 +38,9 @@ public class Catenary extends JPanel {
         minY = 0.0;
         maxY = 0.0;
         sc = 0.0;
+        metric = Metric.MM;
+        paperSize = PaperSize.LETTER;
+        format = Format.PDF;
         title = new String("");
     }
 
@@ -59,6 +66,18 @@ public class Catenary extends JPanel {
 
     public void setScaleHeight(double g_ys) {
         this.g_ys = g_ys;
+    }
+
+    public void setMetric(Metric metric) {
+        this.metric = metric;
+    }
+
+    public void setPaper(PaperSize paperSize) {
+        this.paperSize = paperSize;
+    }
+
+    public void setFormat(Format format) {
+        this.format = format;
     }
 
     /**
@@ -109,8 +128,7 @@ public class Catenary extends JPanel {
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
-            points.getX().add(new Double(x));
-            points.getY().add(new Double(y));
+            points.getPoints().add(new Point(x,y));
         }
 
         double sx = (width-10)/(maxX-minX);
@@ -122,20 +140,23 @@ public class Catenary extends JPanel {
             // ignore offset X/Y for now
         }
         for (int i=0; i<=res; i++) {
-            double x = points.getX().get(i);
-            double y = points.getY().get(i);
-            points.getX().set(i, new Double(sc*(x-minX)+5));
-            points.getY().set(i, new Double(height-(sc*(y-minY))-5));
+            double x = points.getPoints().get(i).X;
+            double y = points.getPoints().get(i).Y;
+            x = sc*(x-minX)+5;
+            y = height-(sc*(y-minY))-5;
+            points.getPoints().set(i, new Point(x, y));
         }
 
         // Use Line2D since Graphics drawLine doesn't take doubles
         Graphics2D g2 = (Graphics2D) g;
         for (int i=1; i<=res; i++) {
-            Line2D.Double line = new Line2D.Double(points.getX().get(i-1),
-                                                   points.getY().get(i-1),
-                                                   points.getX().get(i),
-                                                   points.getY().get(i));
+            Line2D.Double line = new Line2D.Double(points.getPoints().get(i-1).X,
+                                                   points.getPoints().get(i-1).Y,
+                                                   points.getPoints().get(i).X,
+                                                   points.getPoints().get(i).Y);
             g2.draw(line);
         }
     }
+
+    public void writeToFile(File file) {}
 }

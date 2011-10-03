@@ -1,11 +1,12 @@
+import java.io.File;
+
 import javax.swing.JPanel;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class CycloidPanel extends JPanel
-    implements ActionListener {
+public class CycloidPanel extends JPanel {
 
     private JTabbedPane drawPane;
     private Cycloid cycloidPanel;
@@ -34,57 +35,31 @@ public class CycloidPanel extends JPanel
     private JTextField scaleWidthText;
     private JTextField scaleHeightText;
 
-    private static String CREATE_COMMAND = "create";
-    private static String CLEAR_COMMAND = "clear";
-    private static String MM_COMMAND = "mm";
-    private static String INCH_COMMAND = "inch";
-    private static String LETTER_COMMAND = "letter";
-    private static String LEGAL_COMMAND = "legal";
-    private static String A4_COMMAND = "a4";
-    private static String A3_COMMAND = "a3";
-    private static String PDF_COMMAND = "pdf";
-    private static String PS_COMMAND = "ps";
-    private static String DXF_COMMAND = "dxf";
-    private static String CSV_COMMAND = "csv";
-
-    private enum Metric {
-        MM, INCH
-    }
-
-    // default select metric to mm
-    private Metric metricSelected = Metric.MM;
-
-    private enum PaperSize {
-        LETTER, LEGAL, A4, A3
-    }
-
-    // default select paper size to metric
-    private PaperSize paperSelected = PaperSize.LETTER;
-
-    private enum Format {
-        PDF, PS, DXF, CSV
-    }
-
-    // default select format to PDF
-    private Format formatSelected = Format.PDF;
-
     private boolean captionEnabled = false;
     private boolean redrawEnabled = true;
     private boolean autoFileNameEnabled = false;
-
-    // set to false when stable
-    private boolean DEBUG = true;
 
     public CycloidPanel() {
         super(new BorderLayout());
 
         createCycloid = new JButton("Create");
-        createCycloid.setActionCommand(CREATE_COMMAND);
-        createCycloid.addActionListener(this);
-
+        createCycloid.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fc = new JFileChooser();
+                int returnVal = fc.showSaveDialog(CycloidPanel.this);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = fc.getSelectedFile();
+                    if (drawPane.getSelectedIndex() == 0) {
+                        cycloidPanel.writeToFile(file);
+                    } else if (drawPane.getSelectedIndex() == 1) {
+                        catenaryPanel.writeToFile(file);
+                    } else {
+                        // this cannot happen
+                    }
+                }
+            }
+            });
         clearCycloid = new JButton("Clear");
-        clearCycloid.setActionCommand(CLEAR_COMMAND);
-        clearCycloid.addActionListener(this);
 
         // Use JTabbedPane to display both Cycloid and Catenary under separate tabs
         drawPane = new JTabbedPane();
@@ -102,11 +77,19 @@ public class CycloidPanel extends JPanel
 
         // mm/inch radio button
         mmButton = new JRadioButton("mm", true);
-        mmButton.setActionCommand(MM_COMMAND);
-        mmButton.addActionListener(this);
+        mmButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setMetric(Metric.MM);
+                catenaryPanel.setMetric(Metric.MM);
+            }
+            });
         inchButton = new JRadioButton("inch");
-        inchButton.setActionCommand(INCH_COMMAND);
-        inchButton.addActionListener(this);
+        inchButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setMetric(Metric.INCH);
+                catenaryPanel.setMetric(Metric.INCH);
+            }
+            });
         ButtonGroup mmInchGroup = new ButtonGroup();
         mmInchGroup.add(mmButton);
         mmInchGroup.add(inchButton);
@@ -291,18 +274,33 @@ public class CycloidPanel extends JPanel
         JPanel sizePanel = new JPanel(new BorderLayout());
         JPanel paperSizePanel = new JPanel(new FlowLayout());
         letterSizeButton = new JRadioButton("Letter", true);
-        letterSizeButton.setActionCommand(LETTER_COMMAND);
-        letterSizeButton.addActionListener(this);
+        letterSizeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setPaper(PaperSize.LETTER);
+                catenaryPanel.setPaper(PaperSize.LETTER);
+            }
+            });
         legalSizeButton = new JRadioButton("Legal");
-        legalSizeButton.setActionCommand(LEGAL_COMMAND);
-        legalSizeButton.addActionListener(this);
+        legalSizeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setPaper(PaperSize.LEGAL);
+                catenaryPanel.setPaper(PaperSize.LEGAL);
+            }
+            });
         a4SizeButton = new JRadioButton("A4");
-        a4SizeButton.setActionCommand(A4_COMMAND);
-        a4SizeButton.addActionListener(this);
+        a4SizeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setPaper(PaperSize.A4);
+                catenaryPanel.setPaper(PaperSize.A4);
+            }
+            });
         a3SizeButton = new JRadioButton("A3");
-        a3SizeButton.setActionCommand(A3_COMMAND);
-        a3SizeButton.addActionListener(this);
-
+        a3SizeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setPaper(PaperSize.A3);
+                catenaryPanel.setPaper(PaperSize.A3);
+            }
+            });
         ButtonGroup paperSizeGroup = new ButtonGroup();
         paperSizeGroup.add(letterSizeButton);
         paperSizeGroup.add(legalSizeButton);
@@ -318,18 +316,33 @@ public class CycloidPanel extends JPanel
         // file format panel
         JPanel formatPanel = new JPanel(new FlowLayout());
         pdfButton = new JRadioButton("PDF", true);
-        pdfButton.setActionCommand(PDF_COMMAND);
-        pdfButton.addActionListener(this);
+        pdfButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setFormat(Format.PDF);
+                catenaryPanel.setFormat(Format.PDF);
+            }
+            });
         psButton = new JRadioButton("PS");
-        psButton.addActionListener(this);
-        psButton.setActionCommand(PS_COMMAND);
+        psButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setFormat(Format.PS);
+                catenaryPanel.setFormat(Format.PS);
+            }
+            });
         dxfButton = new JRadioButton("DXF");
-        dxfButton.setActionCommand(DXF_COMMAND);
-        dxfButton.addActionListener(this);
+        dxfButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setFormat(Format.DXF);
+                catenaryPanel.setFormat(Format.DXF);
+            }
+            });
         csvButton = new JRadioButton("CSV");
-        csvButton.setActionCommand(CSV_COMMAND);
-        csvButton.addActionListener(this);
-
+        csvButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cycloidPanel.setFormat(Format.CSV);
+                catenaryPanel.setFormat(Format.CSV);
+            }
+            });
         ButtonGroup formatGroup = new ButtonGroup();
         formatGroup.add(pdfButton);
         formatGroup.add(psButton);
@@ -422,35 +435,5 @@ public class CycloidPanel extends JPanel
         topPanel.add(topRightPanel, BorderLayout.EAST);
         topPanel.add(settingsPanel, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.SOUTH);
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-
-        if (CREATE_COMMAND.equals(command)) {
-        } else if (CLEAR_COMMAND.equals(command)) {
-        } else if (MM_COMMAND.equals(command)) {
-            metricSelected = Metric.MM;
-        } else if (INCH_COMMAND.equals(command)) {
-            metricSelected = Metric.INCH;
-        } else if (LETTER_COMMAND.equals(command)) {
-            paperSelected = PaperSize.LETTER;
-        } else if (LEGAL_COMMAND.equals(command)) {
-            paperSelected = PaperSize.LEGAL;
-        } else if (A4_COMMAND.equals(command)) {
-            paperSelected = PaperSize.A4;
-        } else if (A3_COMMAND.equals(command)) {
-            paperSelected = PaperSize.A3;
-        } else if (PDF_COMMAND.equals(command)) {
-            formatSelected = Format.PDF;
-        } else if (PS_COMMAND.equals(command)) {
-            formatSelected = Format.PS;
-        } else if (DXF_COMMAND.equals(command)) {
-            formatSelected = Format.DXF;
-        } else if (CSV_COMMAND.equals(command)) {
-            formatSelected = Format.CSV;
-        }
-        // debug only
-        validate();
     }
 }
