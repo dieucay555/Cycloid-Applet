@@ -35,7 +35,6 @@ public class CycloidPanel extends JPanel {
     private JTextField scaleWidthText;
     private JTextField scaleHeightText;
 
-    private boolean captionEnabled = false;
     private boolean redrawEnabled = true;
     private boolean autoFileNameEnabled = false;
 
@@ -206,7 +205,8 @@ public class CycloidPanel extends JPanel {
         captionEnable = new JCheckBox("Caption");
         captionEnable.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                captionEnabled = e.getStateChange() == ItemEvent.SELECTED;
+                cycloidPanel.setCaptionEnabled(e.getStateChange() == ItemEvent.SELECTED);
+                catenaryPanel.setCaptionEnabled(e.getStateChange() == ItemEvent.SELECTED);
             }
             });
         redrawEnable = new JCheckBox("Redraw", null, true);

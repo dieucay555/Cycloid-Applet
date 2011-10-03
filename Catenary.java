@@ -20,6 +20,7 @@ public class Catenary extends JPanel {
     private double minY;
     private double maxY;
     private double sc;
+    private boolean captionEnabled = false;
     private Metric metric;
     private PaperSize paperSize;
     private Format format;
@@ -66,6 +67,10 @@ public class Catenary extends JPanel {
 
     public void setScaleHeight(double g_ys) {
         this.g_ys = g_ys;
+    }
+
+    public void setCaptionEnabled(boolean enabled) {
+        captionEnabled = enabled;
     }
 
     public void setMetric(Metric metric) {

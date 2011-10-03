@@ -2,6 +2,7 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.BufferedWriter;
 
@@ -26,6 +27,8 @@ public class Cycloid extends JPanel {
     private double minY;
     private double maxY;
     private double sc;
+    private double scale = 1.0f;
+    private boolean captionEnabled = false;
     private Metric metric;
     private PaperSize paperSize;
     private Format format;
@@ -80,6 +83,10 @@ public class Cycloid extends JPanel {
         this.g_ys = g_ys;
     }
 
+    public void setCaptionEnabled(boolean enable) {
+        captionEnabled = enable;
+    }
+
     public void setMetric(Metric metric) {
         this.metric = metric;
     }
@@ -104,9 +111,22 @@ public class Cycloid extends JPanel {
         return x;
     }
 
+    public double PlayfairX(double t, double percent) {
+        // Estimate extent of curve
+        double x = R*t-r*Math.cos(t*percent+Math.PI/2);
+        x *= g_xs;
+        return x;
+    }
+
     public double PlayfairY(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
+        double y = r*Math.sin(t*percent+Math.PI/2)+r;
+        y *= g_ys;
+        return y;
+    }
+
+    public double PlayfairY(double t, double percent) {
         double y = r*Math.sin(t*percent+Math.PI/2)+r;
         y *= g_ys;
         return y;
@@ -243,6 +263,9 @@ public class Cycloid extends JPanel {
             case DXF:
                 writeToDXF(file);
                 break;
+            case PDF:
+                writeToPDF(file, split==1);
+                break;
         }
     }
 
@@ -315,6 +338,153 @@ public class Cycloid extends JPanel {
             writer.close();
         } catch (Exception e) {
             // print error msg and stop
+        }
+    }
+
+    /**
+     * Function: creates PDF graph
+     * flag - 0 if whole curve, -1 for negative half, 1 for positive half
+     */
+    private void makePDFGraph(PDFWriter writer, int flag) throws IOException {
+        double minX = PlayfairX(-1*Math.PI);
+        double maxX = PlayfairX(Math.PI);
+
+        // PrintTitle
+        writer.writeLine("BT\n");
+        writer.writeLine("/F1 12 Tf\n");
+        writer.writeLine(String.format("%g %g Td (%s) Tj\n",
+                                (float)(paperSize.getHeight()/2-5*title.length()/2),
+                                (float)(paperSize.getWidth()-60.0),
+                                title));
+        writer.writeLine("ET\n");
+
+        if (captionEnabled) {
+            writer.writeLine("BT\n");
+            writer.writeLine("/F1 12 Tf\n");
+            if (metric == Metric.MM) {
+                writer.writeLine(String.format("%g 60 Td (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) Tj\n",
+                                (float)(paperSize.getHeight()/2-5*40/2), cWidth, cHeight, g_xs, g_ys));
+            } else {
+                writer.writeLine(String.format("%g 60 Td (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) Tj\n",
+                                (float)(paperSize.getHeight()/2-5*40/2), cWidth/25.4, cHeight/25.4, g_xs, g_ys));
+            }
+            writer.writeLine("ET\n");
+        }
+
+        writer.writeLine(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", PT_TO_MM, PT_TO_MM));
+        writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", scale, scale, paperSize.getHeight()/2.0/PT_TO_MM));
+
+        if (flag == -1) {
+            writer.writeLine(String.format("1 0 0 1 %6.3f 20 cm\n", -1*minX/2));
+            maxX = 0.0;
+        } else if (flag == 1) {
+            writer.writeLine(String.format("1 0 0 1 %6.3f 20 cm\n", minX/2));
+            minX = 0.0;
+        }
+
+        // Plot the grid
+        writer.writeLine("q\n");
+        writer.writeLine(".35 w\n");
+        writer.writeLine(".5 G\n");
+        writer.writeLine(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
+        writer.writeLine("Q\n");
+
+        // Plot the curve
+        writer.writeLine("q\n");
+        writer.writeLine(".1 w\n");
+        plotCurve(writer, (int)(maxX-minX), flag);
+        writer.writeLine("Q\n");
+    }
+
+    public void plotCurve(PDFWriter writer, double res, int flag) throws IOException {
+        if (res < 20) {
+            res = 50;
+        }
+
+        Point point = new Point();
+        if (flag <= 0) {
+            point.X = PlayfairX(-1*Math.PI);
+            point.Y = PlayfairY(-1*Math.PI);
+        } else {
+            point.X = PlayfairX(0.0);
+            point.Y = PlayfairY(0.0);
+        }
+
+        writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
+        for (int i=1; i<=res; i++) {
+            if (flag == -1) {
+                point.X = PlayfairX(Math.PI*i/res-Math.PI);
+                point.Y = PlayfairY(Math.PI*i/res-Math.PI);
+            } else if (flag == 0) {
+                point.X = PlayfairX(2*Math.PI*i/res-Math.PI);
+                point.Y = PlayfairY(2*Math.PI*i/res-Math.PI);
+            } else {
+                point.X = PlayfairX(Math.PI*i/res);
+                point.Y = PlayfairY(Math.PI*i/res);
+            }
+            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
+            if (i%10 == 0) {
+                writer.writeLine("S\n");
+                writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
+            }
+        }
+        writer.writeLine("S\n");
+        // flush
+        point.X = PlayfairX(0.0);
+        point.Y = 0;
+        writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
+        point.Y = 2*r+10;
+        writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
+
+        if (flag <= 0) {
+            point.X = PlayfairX(-1*Math.PI, 1.0f);
+            point.Y = 0;
+            writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
+            point.Y = 2*r+10;
+            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
+        }
+
+        if (flag >= 0) {
+            point.X = PlayfairX(Math.PI, 1.0f);
+            point.Y = 0;
+            writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
+            point.Y = 2*r+10;
+            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
+        }
+
+        writer.writeLine("S\n");
+    }
+
+    /**
+     * Function: writes cycloid to PDF file
+     */
+    public void writeToPDF(File file, boolean split) {
+        try {
+            PDFWriter writer = new PDFWriter(file);
+            writer.openPDF();
+            writer.setPageSize(paperSize.getHeight(), paperSize.getWidth());
+
+            if (!split) {
+                writer.simpleHeaders();
+                writer.beginStreamObj(7);
+                makePDFGraph(writer, 0);
+                writer.endStreamObj();
+            } else {
+                int [] pa = new int[2];
+                writer.multiPageHeaders(2, pa);
+                writer.beginStreamObj(pa[0]);
+                makePDFGraph(writer, -1);
+                writer.endStreamObj();
+
+                writer.beginStreamObj(pa[1]);
+                makePDFGraph(writer, 1);
+                writer.endStreamObj();
+            }
+
+            writer.writeXrefs();
+            writer.closePDF();
+        } catch (Exception e) {
+            // print error
         }
     }
 }
