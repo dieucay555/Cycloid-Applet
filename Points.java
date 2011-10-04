@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
-public class Points {
-    private ArrayList<Point> points;
+class Points {
+    private final ArrayList<Point> points;
 
     public Points() {
         // default size to 1024 points to minimize resizing the list

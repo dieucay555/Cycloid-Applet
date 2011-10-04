@@ -1,6 +1,6 @@
 import java.io.PrintWriter;
 
-public class CSVWriter {
+class CSVWriter {
     public static void writeHeader(PrintWriter writer) {}
     public static void writeTrailer(PrintWriter writer) {}
     public static void write2DPolyLine(PrintWriter writer, int n, Points points) {

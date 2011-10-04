@@ -6,34 +6,34 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class CycloidPanel extends JPanel {
+class CycloidPanel extends JPanel {
 
     private JTabbedPane drawPane;
     private Cycloid cycloidPanel;
     private Catenary catenaryPanel;
 
-    private JButton createCycloid;
-    private JButton clearCycloid;
-    private JRadioButton mmButton;
-    private JRadioButton inchButton;
-    private JTextField widthText;
-    private JTextField heightText;
-    private JTextField percentText;
-    private JCheckBox captionEnable;
-    private JCheckBox redrawEnable;
-    private JCheckBox autoFileNameEnable;
-    private JTextField fileNameText;
-    private JTextField titleText;
-    private JRadioButton letterSizeButton;
-    private JRadioButton legalSizeButton;
-    private JRadioButton a4SizeButton;
-    private JRadioButton a3SizeButton;
-    private JRadioButton pdfButton;
-    private JRadioButton psButton;
-    private JRadioButton dxfButton;
-    private JRadioButton csvButton;
-    private JTextField scaleWidthText;
-    private JTextField scaleHeightText;
+    private final JButton createCycloid;
+    private final JButton clearCycloid;
+    private final JRadioButton mmButton;
+    private final JRadioButton inchButton;
+    private final JTextField widthText;
+    private final JTextField heightText;
+    private final JTextField percentText;
+    private final JCheckBox captionEnable;
+    private final JCheckBox redrawEnable;
+    private final JCheckBox autoFileNameEnable;
+    private final JTextField fileNameText;
+    private final JTextField titleText;
+    private final JRadioButton letterSizeButton;
+    private final JRadioButton legalSizeButton;
+    private final JRadioButton a4SizeButton;
+    private final JRadioButton a3SizeButton;
+    private final JRadioButton pdfButton;
+    private final JRadioButton psButton;
+    private final JRadioButton dxfButton;
+    private final JRadioButton csvButton;
+    private final JTextField scaleWidthText;
+    private final JTextField scaleHeightText;
 
     private boolean redrawEnabled = true;
     private boolean autoFileNameEnabled = false;

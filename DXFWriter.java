@@ -1,6 +1,6 @@
 import java.io.PrintWriter;
 
-public class DXFWriter {
+class DXFWriter {
     public static void writeHeader(PrintWriter writer) {
         writer.printf("0\nSECTION\n");
         writer.printf("2\nHeader\n");

@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 
-public class Catenary extends JPanel {
+class Catenary extends JPanel {
     // contains user specified parameters from Applet GUI as its member vars
     private String title;
     private double cLength;
@@ -42,7 +42,7 @@ public class Catenary extends JPanel {
         metric = Metric.MM;
         paperSize = PaperSize.LETTER;
         format = Format.PDF;
-        title = new String("");
+        title = "";
     }
 
     public void setTitle(String title) {
@@ -88,14 +88,15 @@ public class Catenary extends JPanel {
     /**
      * Function Catenary
      * Evaluates the catenary at a t value
+     * @return x coordinate for catenary at t
      */
-    public double CatenaryX(double t) {
+    double CatenaryX(double t) {
         double x = t;
         x *= g_xs;
         return x;
     }
 
-    public double CatenaryY(double t) {
+    double CatenaryY(double t) {
         double y = cLength*Math.cosh(t/cLength)-cLength;
         y *= g_ys;
         return y;

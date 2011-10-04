@@ -12,7 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 
 public class Cycloid extends JPanel {
-    private static final double PT_TO_MM = 2.8346;
+    static final double PT_TO_MM = 2.8346;
     // contains user specified parameters from Applet GUI as its member vars
     private String title;
     private double cWidth; // cycloid width
@@ -27,14 +27,13 @@ public class Cycloid extends JPanel {
     private double minY;
     private double maxY;
     private double sc;
-    private double scale = 1.0f;
     private boolean captionEnabled = false;
     private Metric metric;
     private PaperSize paperSize;
     private Format format;
 
-    private Points points;
-    private Points pointsFile;
+    private final Points points;
+    private final Points pointsFile;
 
     public Cycloid() {
         points = new Points();
@@ -103,7 +102,7 @@ public class Cycloid extends JPanel {
      * Function PlayfairX/Y
      * Evalues the trachoid at a t value
      */
-    public double PlayfairX(double t) {
+    double PlayfairX(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
         double x = R*t-r*Math.cos(t*percent+Math.PI/2);
@@ -111,14 +110,14 @@ public class Cycloid extends JPanel {
         return x;
     }
 
-    public double PlayfairX(double t, double percent) {
+    double PlayfairX(double t, double percent) {
         // Estimate extent of curve
         double x = R*t-r*Math.cos(t*percent+Math.PI/2);
         x *= g_xs;
         return x;
     }
 
-    public double PlayfairY(double t) {
+    double PlayfairY(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
         double y = r*Math.sin(t*percent+Math.PI/2)+r;
@@ -137,7 +136,7 @@ public class Cycloid extends JPanel {
      * Evalues the trachoid at a t value which is stored to a file
      * Returns both X/Y coordinates as this function is a bit expensive
      */
-    public void FilePlayfair(double t, Point point) throws Exception {
+    void FilePlayfair(double t, Point point) throws Exception {
         double t0 = 0.0; double v0 = 0.0;
         double t1 = 0.0; double v1 = 0.0;
         double t2 = 0.0; double v2 = 0.0;
@@ -246,12 +245,10 @@ public class Cycloid extends JPanel {
      */
     public void writeToFile(File file) {
         int split = 0;
-        double width = getWidth();
-        double height = getHeight();
         double minXFile = PlayfairX(-1*Math.PI);
         double maxXFile = PlayfairX(Math.PI);
 
-        if (g_xs*(maxX-minX) > (paperSize.getHeight()-30)/PT_TO_MM) {
+        if (g_xs*(maxXFile-minXFile) > (paperSize.getHeight()-30)/PT_TO_MM) {
             split = 1;
             // eps check
         }
@@ -266,13 +263,16 @@ public class Cycloid extends JPanel {
             case PDF:
                 writeToPDF(file, split==1);
                 break;
+            case PS:
+                writeToPS(file, split==1);
+                break;
         }
     }
 
     /**
      * Function: writes cycloid to CSV file
      */
-    public void writeToCSV(File file) {
+    void writeToCSV(File file) {
         int minX = (int)(-1*(getWidth()/2*percent));
         int maxX = -1*minX;
         int res = (maxX-minX);
@@ -311,7 +311,7 @@ public class Cycloid extends JPanel {
     /**
      * Function: writes cycloid to DXF file
      */
-    public void writeToDXF(File file) {
+    void writeToDXF(File file) {
         int minX = (int)PlayfairX(-1*Math.PI);
         int maxX = (int)PlayfairX(Math.PI);
         int res = (int)(maxX-minX)/2;
@@ -372,6 +372,7 @@ public class Cycloid extends JPanel {
         }
 
         writer.writeLine(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", PT_TO_MM, PT_TO_MM));
+        double scale = 1.0f;
         writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", scale, scale, paperSize.getHeight()/2.0/PT_TO_MM));
 
         if (flag == -1) {
@@ -392,11 +393,138 @@ public class Cycloid extends JPanel {
         // Plot the curve
         writer.writeLine("q\n");
         writer.writeLine(".1 w\n");
-        plotCurve(writer, (int)(maxX-minX), flag);
+        plotPDFCurve(writer, (int)(maxX-minX), flag);
         writer.writeLine("Q\n");
     }
 
-    public void plotCurve(PDFWriter writer, double res, int flag) throws IOException {
+    /**
+     * Function: creates PS graph
+     * flag - 0 if whole curve, -1 for negative half, 1 for positive half
+     */
+    private void makePSGraph(PrintWriter writer, Integer page) throws IOException {
+        double minX = PlayfairX(-1*Math.PI);
+        double maxX = PlayfairX(Math.PI);
+
+        if (maxX-minX > (paperSize.getHeight()-30)/PT_TO_MM) {
+            // makeSplitGraph
+            makeSplitPSGraph(writer, minX, maxX, page);
+            return;
+        }
+
+        page = new Integer(page+1);
+
+        // PrintPageHeader
+        PSWriter.writePageHeader(writer, page /*page*/,
+                                         1/*scale*/,
+                                         paperSize.getWidth(),
+                                         paperSize.getHeight(),
+                                         g_xs,
+                                         g_ys,
+                                         title);
+        writer.printf("%g 20 translate\n", paperSize.getHeight()/2.0/PT_TO_MM);
+
+        if (captionEnabled) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (cWidth > 0 && cHeight > 0) {
+                if (metric == Metric.MM) {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                                    cWidth, cHeight, g_xs, g_ys);
+                } else {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                                    cWidth/25.4, cHeight/25.4, g_xs, g_ys);
+                }
+            } else {
+                if (metric == Metric.MM) {
+                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
+                } else {
+                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show\n", R/25.4, r/25.4);
+                }
+            }
+        }
+
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f %6.3f moveto %6.3f 0 rlineto stroke\n", minX, cHeight/2, maxX-minX);
+        writer.printf("%6.3f %6.3f moveto %6.3f 0 rlineto stroke\n", minX, cHeight, maxX-minX);
+        writer.printf("grestore\n");
+
+        // Plot the curve
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotPSCurve(writer, (int)(maxX-minX), 0);
+        writer.printf("grestore\n");
+    }
+
+    private void makeSplitPSGraph(PrintWriter writer, double minX, double maxX, Integer page) throws IOException {
+        page = new Integer(page+1);
+        PSWriter.writePageHeader(writer, page, 1/*scale*/, paperSize.getWidth(), paperSize.getHeight(), g_xs, g_ys, title);
+        writer.printf("%6.3f 20 translate\n", -1*minX+20);
+        if (captionEnabled) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (cWidth > 0 && cHeight > 0) {
+                if (metric == Metric.MM) {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                            cWidth, cHeight, g_xs, g_ys);
+                } else {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                            cWidth/25.4, cHeight/25.4, g_xs, g_ys);
+                }
+            } else {
+                if (metric == Metric.MM) {
+                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
+                } else {
+                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R/25.4, r/25.4);
+                }
+            }
+        }
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotPSCurve(writer, (int)(maxX-minX)/2, -1);
+        writer.printf("grestore\n");
+
+        writer.printf("grestore\n");
+        writer.printf("showpage\n");
+
+        // Print the second page
+        page = new Integer(page+1);
+        PSWriter.writePageHeader(writer, page, 1/*scale*/, paperSize.getWidth(), paperSize.getHeight(), g_xs, g_ys, title);
+        writer.printf("20 20 translate\n");
+
+        if (captionEnabled) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (cWidth > 0 && cHeight > 0) {
+                if (metric == Metric.MM) {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                            cWidth, cHeight, g_xs, g_ys);
+                } else {
+                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
+                            cWidth/25.4, cHeight/25.4, g_xs, g_ys);
+                }
+            } else {
+                writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
+            }
+        }
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("grestore\n");
+
+        // plot the curve
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotPSCurve(writer, (int)(maxX-minX)/2, 1);
+        writer.printf("grestore\n");
+
+        writer.printf("grestore\n");
+        writer.printf("showpage\n");
+    }
+
+    void plotPDFCurve(PDFWriter writer, double res, int flag) throws IOException {
         if (res < 20) {
             res = 50;
         }
@@ -455,10 +583,69 @@ public class Cycloid extends JPanel {
         writer.writeLine("S\n");
     }
 
+    private void plotPSCurve(PrintWriter writer, double res, int flag) throws IOException {
+        if (res < 20) {
+            res = 50;
+        }
+
+        Point point = new Point();
+        if (flag <= 0) {
+            point.X = PlayfairX(-1*Math.PI);
+            point.Y = PlayfairY(-1*Math.PI);
+        } else {
+            point.X = PlayfairX(0.0);
+            point.Y = PlayfairY(0.0);
+        }
+
+        writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
+        for (int i=1; i<=res; i++) {
+            if (flag == -1) {
+                point.X = PlayfairX(Math.PI*i/res-Math.PI);
+                point.Y = PlayfairY(Math.PI*i/res-Math.PI);
+            } else if (flag == 0) {
+                point.X = PlayfairX(2*Math.PI*i/res-Math.PI);
+                point.Y = PlayfairY(2*Math.PI*i/res-Math.PI);
+            } else {
+                point.X = PlayfairX(Math.PI*i/res);
+                point.Y = PlayfairY(Math.PI*i/res);
+            }
+            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
+            if (i%10 == 0) {
+                writer.printf("stroke\n");
+                writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
+            }
+        }
+        writer.printf("stroke\n");
+        writer.flush();
+        point.X = PlayfairX(0.0);
+        point.Y = 0;
+        writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
+        point.Y = 2*r+10;
+        writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
+
+        if (flag <= 0) {
+            point.X = PlayfairX(-1*Math.PI, 1.0f);
+            point.Y = 0;
+            writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
+            point.Y = 2*r+10;
+            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
+        }
+
+        if (flag >= 0) {
+            point.X = PlayfairX(Math.PI, 1.0f);
+            point.Y = 0;
+            writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
+            point.Y = 2*r+10;
+            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
+        }
+
+        writer.printf("stroke\n");
+    }
+
     /**
      * Function: writes cycloid to PDF file
      */
-    public void writeToPDF(File file, boolean split) {
+    void writeToPDF(File file, boolean split) {
         try {
             PDFWriter writer = new PDFWriter(file);
             writer.openPDF();
@@ -485,6 +672,26 @@ public class Cycloid extends JPanel {
             writer.closePDF();
         } catch (Exception e) {
             // print error
+        }
+    }
+
+    /**
+     * Function: writes cycloid to PS file
+     */
+    void writeToPS(File file, boolean split) {
+        try {
+            Integer page = new Integer(0);
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter writer = new PrintWriter(bw);
+            PSWriter.writeHeader(writer);
+            makePSGraph(writer, page);
+            // TODO: Not sure of top or eps
+            writer.printf("%%%%EOF\n");
+            //PSWriter.writeTrailer(0);
+            writer.close();
+        } catch (Exception e) {
+            // print erro msg and stop
         }
     }
 }

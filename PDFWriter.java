@@ -3,13 +3,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class PDFWriter {
+class PDFWriter {
     private static final int MAX_XREFS = 2000;
     private RandomAccessFile raf;
 
     class PDFFile {
         public int objs;
-        public long [] xrefs;
+        public final long [] xrefs;
         public long xref;
         public int width, height;
         public long streamlenpos1;
@@ -28,7 +28,7 @@ public class PDFWriter {
         }
     }
 
-    PDFFile pdfInfo;
+    private PDFFile pdfInfo;
 
     public PDFWriter(File file) throws FileNotFoundException {
         raf = new RandomAccessFile(file, "rwd");
@@ -50,7 +50,7 @@ public class PDFWriter {
         }
     }
 
-    public void beginObj(int obj) throws IOException {
+    void beginObj(int obj) throws IOException {
         if (obj >= MAX_XREFS) {
             // print error
             return;
@@ -64,7 +64,7 @@ public class PDFWriter {
         raf.writeBytes(String.format("%d 0 obj\n", obj));
     }
 
-    public void endObj() throws IOException {
+    void endObj() throws IOException {
         raf.writeBytes(String.format("endobj\n\n"));
     }
 
@@ -241,7 +241,7 @@ public class PDFWriter {
     }
 
     public void drawPolyLine(int n, Points points) throws IOException {
-        int i=0;
+        int i;
         raf.writeBytes(String.format("%6.3f %6.3f m\n", points.getPoints().get(0).X, points.getPoints().get(0).Y));
         for (i=1; i<n; i++) {
             if (i%20 == 0) {
