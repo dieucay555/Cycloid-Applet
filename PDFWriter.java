@@ -242,16 +242,16 @@ class PDFWriter {
 
     public void drawPolyLine(int n, Points points) throws IOException {
         int i;
-        raf.writeBytes(String.format("%6.3f %6.3f m\n", points.getPoints().get(0).X, points.getPoints().get(0).Y));
+        raf.writeBytes(String.format("%6.3f %6.3f m\n", points.getX(0), points.getY(0)));
         for (i=1; i<n; i++) {
             if (i%20 == 0) {
-                raf.writeBytes(String.format("%6.3f %6.3f l\n", points.getPoints().get(i).X, points.getPoints().get(i).Y));
+                raf.writeBytes(String.format("%6.3f %6.3f l\n", points.getX(i), points.getY(i)));
                 raf.writeBytes("S\n");
                 if (i != n) {
-                    raf.writeBytes(String.format("%6.3f %6.3f m\n", points.getPoints().get(i).X, points.getPoints().get(i).Y));
+                    raf.writeBytes(String.format("%6.3f %6.3f m\n", points.getX(i), points.getY(i)));
                 }
             } else {
-                raf.writeBytes(String.format("%6.3f %6.3f l\n", points.getPoints().get(i).X, points.getPoints().get(i).Y));
+                raf.writeBytes(String.format("%6.3f %6.3f l\n", points.getX(i), points.getY(i)));
             }
         }
         if (i != n+1) {

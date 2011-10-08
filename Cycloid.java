@@ -209,7 +209,7 @@ public class Cycloid extends JPanel {
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
-            points.getPoints().add(new Point(x,y));
+            points.addPoint(new Point(x,y));
         }
 
         double sx = (width-10)/(maxX-minX);
@@ -221,20 +221,20 @@ public class Cycloid extends JPanel {
             // ignore offset X/Y for now
         }
         for (int i=0; i<=res; i++) {
-            double x = points.getPoints().get(i).X;
-            double y = points.getPoints().get(i).Y;
+            double x = points.getX(i);
+            double y = points.getY(i);
             x = sc*(x-minX)+5;
             y = height-(sc*(y-minY))-5;
-            points.getPoints().set(i, new Point(x,y));
+            points.setPoint(i, new Point(x,y));
         }
 
         // Use Line2D since Graphics drawLine doesn't take doubles
         Graphics2D g2 = (Graphics2D) g;
         for (int i=1; i<=res; i++) {
-            Line2D.Double line = new Line2D.Double(points.getPoints().get(i-1).X,
-                                                   points.getPoints().get(i-1).Y,
-                                                   points.getPoints().get(i).X,
-                                                   points.getPoints().get(i).Y);
+            Line2D.Double line = new Line2D.Double(points.getX(i-1),
+                                                   points.getY(i-1),
+                                                   points.getX(i),
+                                                   points.getY(i));
             g2.draw(line);
         }
     }
@@ -288,7 +288,7 @@ public class Cycloid extends JPanel {
             try {
                 Point point = new Point();
                 FilePlayfair(2*Math.PI*i/res-Math.PI, point);
-                pointsFile.getPoints().add(new Point(point.X, point.Y));
+                pointsFile.addPoint(point);
             } catch (Exception e) {
                 // print error msg and stop
                 e.printStackTrace();
@@ -325,7 +325,7 @@ public class Cycloid extends JPanel {
         for (int i=0; i<=res; i++) {
             double x = PlayfairX(2*Math.PI*i/res-Math.PI);
             double y = PlayfairY(2*Math.PI*i/res-Math.PI);
-            pointsFile.getPoints().add(new Point(x,y));
+            pointsFile.addPoint(new Point(x,y));
         }
 
         try {
@@ -372,8 +372,10 @@ public class Cycloid extends JPanel {
         }
 
         writer.writeLine(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", PT_TO_MM, PT_TO_MM));
-        double scale = 1.0f;
-        writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", scale, scale, paperSize.getHeight()/2.0/PT_TO_MM));
+        // TODO: make sure if this change is correct
+        //double scale = 1.0f;
+        //writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", scale, scale, paperSize.getHeight()/2.0/PT_TO_MM));
+        writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", g_xs, g_ys, paperSize.getHeight()/2.0/PT_TO_MM));
 
         if (flag == -1) {
             writer.writeLine(String.format("1 0 0 1 %6.3f 20 cm\n", -1*minX/2));
@@ -479,6 +481,20 @@ public class Cycloid extends JPanel {
                 }
             }
         }
+        /**
+         * Draws axis to the graph
+         */
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("grestore\n");
+
+        /**
+         * Plots curve
+         */
         writer.printf("gsave\n");
         writer.printf(".1 setlinewidth\n");
         plotPSCurve(writer, (int)(maxX-minX)/2, -1);

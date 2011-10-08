@@ -33,8 +33,8 @@ class DXFWriter {
         for (int i=0; i<n; i++) {
             writer.printf("0\nVERTEX\n");
             writer.printf("8\n0\n");
-            writer.printf("10\n%9.7f\n", points.getPoints().get(i).X);
-            writer.printf("20\n%9.7f\n", points.getPoints().get(i).Y);
+            writer.printf("10\n%9.7f\n", points.getX(i));
+            writer.printf("20\n%9.7f\n", points.getY(i));
         }
         writer.printf("0\nSEQEND\n");
         writer.printf("8\n0\n");

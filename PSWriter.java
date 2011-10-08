@@ -19,14 +19,18 @@ class PSWriter {
                                        String title)
     {
         writer.printf("%%%%Page: %d %d\n", page, page);
+        // TODO: I am not sure why this is needed
         if (scale != 1.0) {
             writer.printf("%4.2f %4.2f scale\n", scale, scale);
         }
         writer.printf("gsave\n");
         writer.printf("90 rotate\n");
         writer.printf("0 -%d translate\n", width);
-        writer.printf("%5.4f %.4f scale\n", Cycloid.PT_TO_MM*g_xs, Cycloid.PT_TO_MM*g_ys);
+        writer.printf("%5.4f %5.4f scale\n", Cycloid.PT_TO_MM*g_xs, Cycloid.PT_TO_MM*g_ys);
+        //writer.printf("%5.4f 1 scale\n", Cycloid.PT_TO_MM*g_xs);
         writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
-        writer.printf("%g 200 moveto (%s) dup stringwidth pop 2 div neg 0 rmoveto show\n", height/2.0/Cycloid.PT_TO_MM, title);
+        //writer.printf("%g 200 moveto (%s) dup stringwidth pop 2 div neg 0 rmoveto show\n", height/2.0/Cycloid.PT_TO_MM, title);
+        writer.printf("%g %g moveto (%s) dup stringwidth pop 2 div neg 0 rmoveto show\n", height/2.0/Cycloid.PT_TO_MM, 200.0/g_ys, title);
+        //writer.printf("%5.4f %5.4f scale\n", Cycloid.PT_TO_MM*g_xs, Cycloid.PT_TO_MM*g_ys);
     }
 }

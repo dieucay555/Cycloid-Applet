@@ -13,6 +13,14 @@ class Points {
         return points;
     }
 
+    public void addPoint(Point point) {
+        points.add(point);
+    }
+
+    public void setPoint(int index, Point point) {
+        points.set(index, point);
+    }
+
     public Double getX(int index) {
         return points.get(index).X;
     }

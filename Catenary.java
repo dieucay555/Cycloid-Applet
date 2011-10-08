@@ -134,7 +134,7 @@ class Catenary extends JPanel {
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
-            points.getPoints().add(new Point(x,y));
+            points.addPoint(new Point(x,y));
         }
 
         double sx = (width-10)/(maxX-minX);
@@ -146,20 +146,20 @@ class Catenary extends JPanel {
             // ignore offset X/Y for now
         }
         for (int i=0; i<=res; i++) {
-            double x = points.getPoints().get(i).X;
-            double y = points.getPoints().get(i).Y;
+            double x = points.getX(i);
+            double y = points.getY(i);
             x = sc*(x-minX)+5;
             y = height-(sc*(y-minY))-5;
-            points.getPoints().set(i, new Point(x, y));
+            points.setPoint(i, new Point(x, y));
         }
 
         // Use Line2D since Graphics drawLine doesn't take doubles
         Graphics2D g2 = (Graphics2D) g;
         for (int i=1; i<=res; i++) {
-            Line2D.Double line = new Line2D.Double(points.getPoints().get(i-1).X,
-                                                   points.getPoints().get(i-1).Y,
-                                                   points.getPoints().get(i).X,
-                                                   points.getPoints().get(i).Y);
+            Line2D.Double line = new Line2D.Double(points.getX(i-1),
+                                                   points.getY(i-1),
+                                                   points.getX(i),
+                                                   points.getY(i));
             g2.draw(line);
         }
     }
