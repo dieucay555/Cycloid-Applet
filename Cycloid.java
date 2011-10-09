@@ -1,6 +1,7 @@
 import java.lang.Math;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -56,8 +57,21 @@ public class Cycloid extends JPanel {
         title = new String("");
     }
 
+    /**
+     * Returns a copy of title
+     *
+     * makes sure that members cannot be modified by outside
+     */
+    public String getTitle() {
+        return new String(title);
+    }
+
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public double getCycloidWidth() {
+        return cWidth;
     }
 
     public void setCycloidWidth(double width) {
@@ -65,33 +79,73 @@ public class Cycloid extends JPanel {
         this.R = width/2/Math.PI;
     }
 
+    public double getCycloidHeight() {
+        return cHeight;
+    }
+
     public void setCycloidHeight(double height) {
         this.cHeight = height;
         this.r = height/2;
+    }
+
+    public double getR() {
+        return R;
+    }
+
+    public double getr() {
+        return r;
+    }
+
+    public double getPercent() {
+        return percent;
     }
 
     public void setPercent(double percent) {
         this.percent = percent;
     }
 
+    public double getScaleWidth() {
+        return g_xs;
+    }
+
     public void setScaleWidth(double g_xs) {
         this.g_xs = g_xs;
+    }
+
+    public double getScaleHeight() {
+        return g_ys;
     }
 
     public void setScaleHeight(double g_ys) {
         this.g_ys = g_ys;
     }
 
+    public boolean isCaptionEnabled() {
+        return captionEnabled;
+    }
+
     public void setCaptionEnabled(boolean enable) {
         captionEnabled = enable;
+    }
+
+    public Metric getMetric() {
+        return metric;
     }
 
     public void setMetric(Metric metric) {
         this.metric = metric;
     }
 
+    public PaperSize getPaper() {
+        return paperSize;
+    }
+
     public void setPaper(PaperSize paperSize) {
         this.paperSize = paperSize;
+    }
+
+    public Format getFormat() {
+        return format;
     }
 
     public void setFormat(Format format) {
@@ -102,7 +156,7 @@ public class Cycloid extends JPanel {
      * Function PlayfairX/Y
      * Evalues the trachoid at a t value
      */
-    double PlayfairX(double t) {
+    public double PlayfairX(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
         double x = R*t-r*Math.cos(t*percent+Math.PI/2);
@@ -110,14 +164,14 @@ public class Cycloid extends JPanel {
         return x;
     }
 
-    double PlayfairX(double t, double percent) {
+    public double PlayfairX(double t, double percent) {
         // Estimate extent of curve
         double x = R*t-r*Math.cos(t*percent+Math.PI/2);
         x *= g_xs;
         return x;
     }
 
-    double PlayfairY(double t) {
+    public double PlayfairY(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
         double y = r*Math.sin(t*percent+Math.PI/2)+r;
@@ -244,35 +298,35 @@ public class Cycloid extends JPanel {
      * Uses custom written CSV, DXF, PS, PDF utility to write file
      */
     public void writeToFile(File file) {
-        int split = 0;
-        double minXFile = PlayfairX(-1*Math.PI);
-        double maxXFile = PlayfairX(Math.PI);
-
-        if (g_xs*(maxXFile-minXFile) > (paperSize.getHeight()-30)/PT_TO_MM) {
-            split = 1;
-            // eps check
-        }
-
-        switch(format) {
-            case CSV:
-                writeToCSV(file);
-                break;
-            case DXF:
-                writeToDXF(file);
-                break;
-            case PDF:
-                writeToPDF(file, split==1);
-                break;
-            case PS:
-                writeToPS(file, split==1);
-                break;
+        try {
+            switch(format) {
+                case CSV:
+                    writeToCSV(file);
+                    break;
+                case DXF:
+                    writeToDXF(file);
+                    break;
+                case PDF:
+                    writeToPDF(file);
+                    break;
+                case PS:
+                    writeToPS(file);
+                    break;
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
-     * Function: writes cycloid to CSV file
+     * Writes cycloid to CSV file.
+     * 
+     * @param file the CSV filename a user specified to save cycloid constructed
      */
-    void writeToCSV(File file) {
+    void writeToCSV(File file) throws IOException {
         int minX = (int)(-1*(getWidth()/2*percent));
         int maxX = -1*minX;
         int res = (maxX-minX);
@@ -281,37 +335,45 @@ public class Cycloid extends JPanel {
             pointsFile.resize(res+1);
         }
 
-        // clears previous contents
-        pointsFile.clear();
+        pointsFile.clear(); // ArrayList.clear()
 
-        for(int i=0; i<=res; i++) {
+        for (int i=0; i<=res; i++) {
             try {
                 Point point = new Point();
                 FilePlayfair(2*Math.PI*i/res-Math.PI, point);
                 pointsFile.addPoint(point);
             } catch (Exception e) {
-                // print error msg and stop
-                e.printStackTrace();
+                // bails out if points are not complete
+                JOptionPane.showMessageDialog(this,
+                    "Exception occurred while processing to write to CSV file.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
             }
         }
 
+        CSVWriter writer = new CSVWriter(file);
         try {
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
-            PrintWriter writer = new PrintWriter(bw);
-            CSVWriter.writeHeader(writer);
-            CSVWriter.write2DPolyLine(writer, res+1, pointsFile);
-            CSVWriter.writeTrailer(writer);
-            writer.close();
+            writer.write2DPolyLine(pointsFile);
         } catch (Exception e) {
-            // print erro msg and stop
+            JOptionPane.showMessageDialog(this,
+                "Exception occurred while writing to CSV file.",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // error might have happened before writer is constructed
+            if(writer != null) {
+                writer.closeFile(); // does not throw exception
+            }
         }
     }
 
     /**
-     * Function: writes cycloid to DXF file
+     * Writes cycloid to DXF file
+     *
+     * @param file filename
      */
-    void writeToDXF(File file) {
+    void writeToDXF(File file) throws IOException {
         int minX = (int)PlayfairX(-1*Math.PI);
         int maxX = (int)PlayfairX(Math.PI);
         int res = (int)(maxX-minX)/2;
@@ -328,386 +390,93 @@ public class Cycloid extends JPanel {
             pointsFile.addPoint(new Point(x,y));
         }
 
+        DXFWriter writer = new DXFWriter(file);
         try {
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
-            PrintWriter writer = new PrintWriter(bw);
-            DXFWriter.writeHeader(writer);
-            DXFWriter.write2DPolyLine(writer, res+1, pointsFile);
-            DXFWriter.writeTrailer(writer);
-            writer.close();
+            writer.writeHeader();
+            writer.write2DPolyLine(pointsFile);
+            writer.writeTrailer();
         } catch (Exception e) {
-            // print error msg and stop
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (writer != null) {
+                writer.closeFile(); // does not throw exception
+            }
         }
     }
 
     /**
-     * Function: creates PDF graph
-     * flag - 0 if whole curve, -1 for negative half, 1 for positive half
+     * Writes cycloid to PDF file
+     *
+     * @param file filename
      */
-    private void makePDFGraph(PDFWriter writer, int flag) throws IOException {
-        double minX = PlayfairX(-1*Math.PI);
-        double maxX = PlayfairX(Math.PI);
-
-        // PrintTitle
-        writer.writeLine("BT\n");
-        writer.writeLine("/F1 12 Tf\n");
-        writer.writeLine(String.format("%g %g Td (%s) Tj\n",
-                                (float)(paperSize.getHeight()/2-5*title.length()/2),
-                                (float)(paperSize.getWidth()-60.0),
-                                title));
-        writer.writeLine("ET\n");
-
-        if (captionEnabled) {
-            writer.writeLine("BT\n");
-            writer.writeLine("/F1 12 Tf\n");
-            if (metric == Metric.MM) {
-                writer.writeLine(String.format("%g 60 Td (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) Tj\n",
-                                (float)(paperSize.getHeight()/2-5*40/2), cWidth, cHeight, g_xs, g_ys));
-            } else {
-                writer.writeLine(String.format("%g 60 Td (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) Tj\n",
-                                (float)(paperSize.getHeight()/2-5*40/2), cWidth/25.4, cHeight/25.4, g_xs, g_ys));
-            }
-            writer.writeLine("ET\n");
-        }
-
-        writer.writeLine(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", PT_TO_MM, PT_TO_MM));
-        // TODO: make sure if this change is correct
-        //double scale = 1.0f;
-        //writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", scale, scale, paperSize.getHeight()/2.0/PT_TO_MM));
-        writer.writeLine(String.format("%g 0 0 %g %g 50 cm\n", g_xs, g_ys, paperSize.getHeight()/2.0/PT_TO_MM));
-
-        if (flag == -1) {
-            writer.writeLine(String.format("1 0 0 1 %6.3f 20 cm\n", -1*minX/2));
-            maxX = 0.0;
-        } else if (flag == 1) {
-            writer.writeLine(String.format("1 0 0 1 %6.3f 20 cm\n", minX/2));
-            minX = 0.0;
-        }
-
-        // Plot the grid
-        writer.writeLine("q\n");
-        writer.writeLine(".35 w\n");
-        writer.writeLine(".5 G\n");
-        writer.writeLine(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
-        writer.writeLine("Q\n");
-
-        // Plot the curve
-        writer.writeLine("q\n");
-        writer.writeLine(".1 w\n");
-        plotPDFCurve(writer, (int)(maxX-minX), flag);
-        writer.writeLine("Q\n");
-    }
-
-    /**
-     * Function: creates PS graph
-     * flag - 0 if whole curve, -1 for negative half, 1 for positive half
-     */
-    private void makePSGraph(PrintWriter writer, Integer page) throws IOException {
-        double minX = PlayfairX(-1*Math.PI);
-        double maxX = PlayfairX(Math.PI);
-
-        if (maxX-minX > (paperSize.getHeight()-30)/PT_TO_MM) {
-            // makeSplitGraph
-            makeSplitPSGraph(writer, minX, maxX, page);
-            return;
-        }
-
-        page = new Integer(page+1);
-
-        // PrintPageHeader
-        PSWriter.writePageHeader(writer, page /*page*/,
-                                         1/*scale*/,
-                                         paperSize.getWidth(),
-                                         paperSize.getHeight(),
-                                         g_xs,
-                                         g_ys,
-                                         title);
-        writer.printf("%g 20 translate\n", paperSize.getHeight()/2.0/PT_TO_MM);
-
-        if (captionEnabled) {
-            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
-            if (cWidth > 0 && cHeight > 0) {
-                if (metric == Metric.MM) {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                                    cWidth, cHeight, g_xs, g_ys);
-                } else {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                                    cWidth/25.4, cHeight/25.4, g_xs, g_ys);
-                }
-            } else {
-                if (metric == Metric.MM) {
-                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
-                } else {
-                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show\n", R/25.4, r/25.4);
-                }
-            }
-        }
-
-        writer.printf("gsave\n");
-        writer.printf(".35 setlinewidth\n");
-        writer.printf(".5 setgray\n");
-        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f %6.3f moveto %6.3f 0 rlineto stroke\n", minX, cHeight/2, maxX-minX);
-        writer.printf("%6.3f %6.3f moveto %6.3f 0 rlineto stroke\n", minX, cHeight, maxX-minX);
-        writer.printf("grestore\n");
-
-        // Plot the curve
-        writer.printf("gsave\n");
-        writer.printf(".1 setlinewidth\n");
-        plotPSCurve(writer, (int)(maxX-minX), 0);
-        writer.printf("grestore\n");
-    }
-
-    private void makeSplitPSGraph(PrintWriter writer, double minX, double maxX, Integer page) throws IOException {
-        page = new Integer(page+1);
-        PSWriter.writePageHeader(writer, page, 1/*scale*/, paperSize.getWidth(), paperSize.getHeight(), g_xs, g_ys, title);
-        writer.printf("%6.3f 20 translate\n", -1*minX+20);
-        if (captionEnabled) {
-            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
-            if (cWidth > 0 && cHeight > 0) {
-                if (metric == Metric.MM) {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                            cWidth, cHeight, g_xs, g_ys);
-                } else {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                            cWidth/25.4, cHeight/25.4, g_xs, g_ys);
-                }
-            } else {
-                if (metric == Metric.MM) {
-                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
-                } else {
-                    writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R/25.4, r/25.4);
-                }
-            }
-        }
-        /**
-         * Draws axis to the graph
-         */
-        writer.printf("gsave\n");
-        writer.printf(".35 setlinewidth\n");
-        writer.printf(".5 setgray\n");
-        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("grestore\n");
-
-        /**
-         * Plots curve
-         */
-        writer.printf("gsave\n");
-        writer.printf(".1 setlinewidth\n");
-        plotPSCurve(writer, (int)(maxX-minX)/2, -1);
-        writer.printf("grestore\n");
-
-        writer.printf("grestore\n");
-        writer.printf("showpage\n");
-
-        // Print the second page
-        page = new Integer(page+1);
-        PSWriter.writePageHeader(writer, page, 1/*scale*/, paperSize.getWidth(), paperSize.getHeight(), g_xs, g_ys, title);
-        writer.printf("20 20 translate\n");
-
-        if (captionEnabled) {
-            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
-            if (cWidth > 0 && cHeight > 0) {
-                if (metric == Metric.MM) {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                            cWidth, cHeight, g_xs, g_ys);
-                } else {
-                    writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth pop 2 div neg 0 rmoveto show \n",
-                            cWidth/25.4, cHeight/25.4, g_xs, g_ys);
-                }
-            } else {
-                writer.printf("0 -8 moveto (R=%4.2f,  r=%4.2f) dup stringwidth pop 2 div neg 0 rmoveto show \n", R, r);
-            }
-        }
-        writer.printf("gsave\n");
-        writer.printf(".35 setlinewidth\n");
-        writer.printf(".5 setgray\n");
-        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("grestore\n");
-
-        // plot the curve
-        writer.printf("gsave\n");
-        writer.printf(".1 setlinewidth\n");
-        plotPSCurve(writer, (int)(maxX-minX)/2, 1);
-        writer.printf("grestore\n");
-
-        writer.printf("grestore\n");
-        writer.printf("showpage\n");
-    }
-
-    void plotPDFCurve(PDFWriter writer, double res, int flag) throws IOException {
-        if (res < 20) {
-            res = 50;
-        }
-
-        Point point = new Point();
-        if (flag <= 0) {
-            point.X = PlayfairX(-1*Math.PI);
-            point.Y = PlayfairY(-1*Math.PI);
-        } else {
-            point.X = PlayfairX(0.0);
-            point.Y = PlayfairY(0.0);
-        }
-
-        writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
-        for (int i=1; i<=res; i++) {
-            if (flag == -1) {
-                point.X = PlayfairX(Math.PI*i/res-Math.PI);
-                point.Y = PlayfairY(Math.PI*i/res-Math.PI);
-            } else if (flag == 0) {
-                point.X = PlayfairX(2*Math.PI*i/res-Math.PI);
-                point.Y = PlayfairY(2*Math.PI*i/res-Math.PI);
-            } else {
-                point.X = PlayfairX(Math.PI*i/res);
-                point.Y = PlayfairY(Math.PI*i/res);
-            }
-            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
-            if (i%10 == 0) {
-                writer.writeLine("S\n");
-                writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
-            }
-        }
-        writer.writeLine("S\n");
-        // flush
-        point.X = PlayfairX(0.0);
-        point.Y = 0;
-        writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
-        point.Y = 2*r+10;
-        writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
-
-        if (flag <= 0) {
-            point.X = PlayfairX(-1*Math.PI, 1.0f);
-            point.Y = 0;
-            writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
-            point.Y = 2*r+10;
-            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
-        }
-
-        if (flag >= 0) {
-            point.X = PlayfairX(Math.PI, 1.0f);
-            point.Y = 0;
-            writer.writeLine(String.format("%6.3f %6.3f m\n", point.X, point.Y));
-            point.Y = 2*r+10;
-            writer.writeLine(String.format("%6.3f %6.3f l\n", point.X, point.Y));
-        }
-
-        writer.writeLine("S\n");
-    }
-
-    private void plotPSCurve(PrintWriter writer, double res, int flag) throws IOException {
-        if (res < 20) {
-            res = 50;
-        }
-
-        Point point = new Point();
-        if (flag <= 0) {
-            point.X = PlayfairX(-1*Math.PI);
-            point.Y = PlayfairY(-1*Math.PI);
-        } else {
-            point.X = PlayfairX(0.0);
-            point.Y = PlayfairY(0.0);
-        }
-
-        writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
-        for (int i=1; i<=res; i++) {
-            if (flag == -1) {
-                point.X = PlayfairX(Math.PI*i/res-Math.PI);
-                point.Y = PlayfairY(Math.PI*i/res-Math.PI);
-            } else if (flag == 0) {
-                point.X = PlayfairX(2*Math.PI*i/res-Math.PI);
-                point.Y = PlayfairY(2*Math.PI*i/res-Math.PI);
-            } else {
-                point.X = PlayfairX(Math.PI*i/res);
-                point.Y = PlayfairY(Math.PI*i/res);
-            }
-            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
-            if (i%10 == 0) {
-                writer.printf("stroke\n");
-                writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
-            }
-        }
-        writer.printf("stroke\n");
-        writer.flush();
-        point.X = PlayfairX(0.0);
-        point.Y = 0;
-        writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
-        point.Y = 2*r+10;
-        writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
-
-        if (flag <= 0) {
-            point.X = PlayfairX(-1*Math.PI, 1.0f);
-            point.Y = 0;
-            writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
-            point.Y = 2*r+10;
-            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
-        }
-
-        if (flag >= 0) {
-            point.X = PlayfairX(Math.PI, 1.0f);
-            point.Y = 0;
-            writer.printf("%6.3f %6.3f moveto\n", point.X, point.Y);
-            point.Y = 2*r+10;
-            writer.printf("%6.3f %6.3f lineto\n", point.X, point.Y);
-        }
-
-        writer.printf("stroke\n");
-    }
-
-    /**
-     * Function: writes cycloid to PDF file
-     */
-    void writeToPDF(File file, boolean split) {
+    void writeToPDF(File file) throws FileNotFoundException {
+        PDFWriter writer = new PDFWriter(file);
         try {
-            PDFWriter writer = new PDFWriter(file);
             writer.openPDF();
             writer.setPageSize(paperSize.getHeight(), paperSize.getWidth());
+
+            double minX = PlayfairX(-1*Math.PI);
+            double maxX = PlayfairX(Math.PI);
+            boolean split = false;
+
+            if (g_xs*(maxX-minX) > (paperSize.getHeight()-30)/PT_TO_MM) {
+                split = true;
+                // TODO if eps true then write error message
+            }
 
             if (!split) {
                 writer.simpleHeaders();
                 writer.beginStreamObj(7);
-                makePDFGraph(writer, 0);
+                writer.makeCycloidGraph(0, this);
                 writer.endStreamObj();
             } else {
-                int [] pa = new int[2];
-                writer.multiPageHeaders(2, pa);
-                writer.beginStreamObj(pa[0]);
-                makePDFGraph(writer, -1);
+                writer.multiPageHeaders(2);
+                writer.beginStreamObj(8/*pc+6*/);
+                writer.makeCycloidGraph(-1, this);
                 writer.endStreamObj();
 
-                writer.beginStreamObj(pa[1]);
-                makePDFGraph(writer, 1);
+                writer.beginStreamObj(9/*pc+6+1*/);
+                writer.makeCycloidGraph(1, this);
                 writer.endStreamObj();
             }
 
             writer.writeXrefs();
-            writer.closePDF();
         } catch (Exception e) {
-            // print error
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (writer != null) {
+                writer.closePDF(); // will not throw exception here
+            }
         }
     }
 
     /**
-     * Function: writes cycloid to PS file
+     * Writes cycloid to PS file
+     *
+     * @param file filename
+     * @param split true if split into 2 pages, 0 otherwise
      */
-    void writeToPS(File file, boolean split) {
+    void writeToPS(File file) throws IOException {
+        PSWriter writer = new PSWriter(file);
         try {
-            Integer page = new Integer(0);
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
-            PrintWriter writer = new PrintWriter(bw);
-            PSWriter.writeHeader(writer);
-            makePSGraph(writer, page);
-            // TODO: Not sure of top or eps
-            writer.printf("%%%%EOF\n");
-            //PSWriter.writeTrailer(0);
-            writer.close();
+            writer.writeHeader();
+            writer.makeCycloidGraph(this);
+            writer.writeTrailer();
         } catch (Exception e) {
-            // print erro msg and stop
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (writer != null) {
+                writer.closeFile(); // will not throw exception here
+            }
         }
     }
 }

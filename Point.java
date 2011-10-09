@@ -1,4 +1,8 @@
+/**
+ * A class to hold X,Y coordinates for drawing figures.
+ */
 class Point {
+    // don't need a lot of setter/getters but be careful
     public double X;
     public double Y;
 
