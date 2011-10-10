@@ -402,6 +402,11 @@ class PDFWriter {
         raf.writeBytes(".35 w\n");
         raf.writeBytes(".5 G\n");
         raf.writeBytes(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
+        // writes horizontal grid lines
+        raf.writeBytes(String.format("%6.3f %6.3f m %6.3f %6.3f l S\n", minX, cycloid.getCycloidHeight()/2
+                        , maxX, cycloid.getCycloidHeight()/2));
+        raf.writeBytes(String.format("%6.3f %6.3f m %6.3f %6.3f l S\n", minX, cycloid.getCycloidHeight()
+                        , maxX, cycloid.getCycloidHeight()));
         raf.writeBytes("Q\n");
 
         // plots the curve
