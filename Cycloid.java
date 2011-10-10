@@ -54,7 +54,7 @@ public class Cycloid extends JPanel {
         metric = Metric.MM;
         paperSize = PaperSize.LETTER;
         format = Format.PDF;
-        title = new String("");
+        title = "";
     }
 
     /**
@@ -423,7 +423,7 @@ public class Cycloid extends JPanel {
      * Writes cycloid to PDF file
      *
      * @param file filename
-     * @param split true if split into 2 pages, 0 otherwise
+     * @param split true if split into 2 pages, false otherwise
      */
     void writeToPDF(File file, boolean split) throws FileNotFoundException {
         PDFWriter writer = new PDFWriter(file);
@@ -464,7 +464,7 @@ public class Cycloid extends JPanel {
      * Writes cycloid to PS file
      *
      * @param file filename
-     * @param split true if split into 2 pages, 0 otherwise
+     * @param split true if split into 2 pages, false otherwise
      */
     void writeToPS(File file, boolean split) throws IOException {
         PSWriter writer = new PSWriter(file, split);

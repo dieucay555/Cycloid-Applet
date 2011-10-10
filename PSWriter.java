@@ -68,8 +68,8 @@ class PSWriter {
         writer.printf("0 -%d translate\n", width);
         writer.printf("%5.4f %5.4f scale\n", Cycloid.PT_TO_MM*g_xs, Cycloid.PT_TO_MM*g_ys);
         writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
-        writer.printf("%g %g moveto (%s) dup stringwidth pop 2 div neg 0 rmoveto show\n"
-                        , height/2.0/Cycloid.PT_TO_MM, 200.0/g_ys, title);
+        writer.printf("%g 200 moveto (%s) dup stringwidth pop 2 div neg 0 rmoveto show\n"
+                        , height/2.0/Cycloid.PT_TO_MM, title);
         writer.flush();
     }
 
@@ -364,6 +364,259 @@ class PSWriter {
             y = 2*cycloid.getr()+10;
             writer.printf("%6.3f %6.3f lineto\n", x, y);
         }
+        writer.printf("stroke\n");
+        writer.flush();
+    }
+
+    /**
+     * Creates PS graph for catenary
+     *
+     * @param a 'a' for catenary
+     * @param length half of cLength
+     * @param catenary declared as final to only give access to its public methods
+     */
+    public void makeCatenaryGraph(double a, double length, final Catenary catenary) {
+        double percent = (catenary.getPercent() > 100.0 ? catenary.getPercent()/100.0 : 1.0);
+        double minX = catenary.CatenaryX(-1*length*percent);
+        double maxX = catenary.CatenaryX(length*percent);
+        double maxY = catenary.CatenaryY(length*percent);
+
+        if (split) {
+            if (top == 1) {
+                writer.printf("grestore\n");
+                writer.printf("showpage\n");
+            }
+            // makeSplitGraph
+            top = 0;
+            makeSplitCatenaryGraph(a, length, minX, maxX, maxY, catenary);
+            return;
+        }
+
+        if (top == 0) {
+            page += 1;
+
+            writePageHeader(1/* scale */,
+                            catenary.getPaper().getWidth(),
+                            catenary.getPaper().getHeight(),
+                            catenary.getScaleWidth(),
+                            catenary.getScaleHeight(),
+                            catenary.getTitle());
+            writer.printf("%g 20 translate\n", catenary.getPaper().getHeight()/2./Catenary.PT_TO_MM);
+        } else {
+            writer.printf("0 125 translate\n");
+        }
+
+        if (catenary.isCaptionEnabled()) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (catenary.getMetric() == Metric.MM) {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength(),
+                                catenary.getCatenaryDepth(),
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            } else {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength()/25.4,
+                                catenary.getCatenaryDepth()/25.4,
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            }
+        }
+
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        writer.printf("%6.3f 0 moveto %6.3f 0 lineto stroke\n", minX, maxX);
+        writer.printf("0 0 moveto 0 %6.3f lineto stroke\n", maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", minX, minX, maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", maxX, maxX, maxY);
+        // I have added these to draw 3 horizontal grid lines (will be removed if needed)
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("grestore\n");
+
+        // finally plotting the curve
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotCatenaryCurve(a, length, (int)(maxX-minX), 0, catenary);
+        writer.printf("grestore\n");
+
+        if (top == 1) {
+            writer.printf("grestore\n");
+            writer.printf("showpage\n");
+        }
+        writer.flush();
+
+        top = (top+1)%2;
+    }
+
+    /**
+     * Draws split graph if it is too large to fit in a single page
+     *
+     * @param a 'a' for catenary
+     * @param length half of cLength
+     * @param minX min x coord
+     * @param maxX max x coord
+     * @param catenary catenary instance (only public methods are accessible)
+     */
+    private void makeSplitCatenaryGraph(double a, double length, double minX, double maxX, double maxY, final Catenary catenary) {
+        if (maxX-minX > 500) {
+            JOptionPane.showMessageDialog(null,
+                "Graph too large. Ends may be chopped",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE);
+        }
+
+        page += 1;
+
+        writePageHeader(1/*scale*/,
+                        catenary.getPaper().getWidth(),
+                        catenary.getPaper().getHeight(),
+                        catenary.getScaleWidth(),
+                        catenary.getScaleHeight(),
+                        catenary.getTitle());
+        writer.printf("%6.3f 20 translate\n", -1*minX+20);
+        if (catenary.isCaptionEnabled()) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (catenary.getMetric() == Metric.MM) {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength(),
+                                catenary.getCatenaryDepth(),
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            } else {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength()/25.4,
+                                catenary.getCatenaryDepth()/25.4,
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            }
+        }
+
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        // I have added these to draw vertical grid lines
+        writer.printf("%6.3f 0 moveto %6.3f 0 lineto stroke\n", minX, maxX);
+        writer.printf("0 0 moveto 0 %6.3f lineto stroke\n", maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", minX, minX, maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", maxX, maxX, maxY);
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("grestore\n");
+
+        // finally plotting the curve
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotCatenaryCurve(a, length, (int)(maxX-minX)/2, -1, catenary);
+        writer.printf("grestore\n");
+
+        writer.printf("grestore\n");
+        writer.printf("showpage\n");
+
+        // print the second page
+        page += 1;
+        writePageHeader(1/*scale*/,
+                        catenary.getPaper().getWidth(),
+                        catenary.getPaper().getHeight(),
+                        catenary.getScaleWidth(),
+                        catenary.getScaleHeight(),
+                        catenary.getTitle());
+        writer.printf("20 20 translate\n");
+
+        if (catenary.isCaptionEnabled()) {
+            writer.printf("/Times-Roman findfont 5 scalefont setfont\n");
+            if (catenary.getMetric() == Metric.MM) {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength(),
+                                catenary.getCatenaryDepth(),
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            } else {
+                writer.printf("0 -8 moveto (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
+                                + "pop 2 div neg 0 rmoveto show \n",
+                                catenary.getCatenaryLength()/25.4,
+                                catenary.getCatenaryDepth()/25.4,
+                                catenary.getScaleWidth(),
+                                catenary.getScaleHeight());
+            }
+        }
+        writer.printf("gsave\n");
+        writer.printf(".35 setlinewidth\n");
+        writer.printf(".5 setgray\n");
+        // I have added these to draw vertical grid lines
+        writer.printf("%6.3f 0 moveto %6.3f 0 lineto stroke\n", minX, maxX);
+        writer.printf("0 0 moveto 0 %6.3f lineto stroke\n", maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", minX, minX, maxY);
+        writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", maxX, maxX, maxY);
+        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("grestore\n");
+
+        // plotting the curve again
+        writer.printf("gsave\n");
+        writer.printf(".1 setlinewidth\n");
+        plotCatenaryCurve(a, length, (int)(maxX-minX)/2, 1, catenary);
+        writer.printf("grestore\n");
+
+        writer.printf("grestore\n");
+        writer.printf("showpage\n");
+        writer.flush();
+    }
+
+    /**
+     * Plots the catenary curve on PS file
+     *
+     * @param a 'a' in catenary
+     * @param length half of cLength
+     * @param res resolution
+     * @param flag -1 negative half, 0 whole curve, 1 positive half
+     * @param catenary Catenary instance
+     */
+    private void plotCatenaryCurve(double a, double length, int res, int flag, final Catenary catenary) {
+        if (res < 20) {
+            res = 50;
+        }
+
+        double x = 0.0;
+        double y = 0.0;
+        if (flag <= 0) {
+            x = catenary.CatenaryX(-1*length);
+            y = catenary.CatenaryY(-1*length);
+        } else {
+            x = catenary.CatenaryX(0.0);
+            y = catenary.CatenaryY(0.0);
+        }
+
+        writer.printf("%6.3f %6.3f moveto\n", x, y);
+        for (int i=1; i<=res; ++i) {
+            if (flag == -1) {
+                x = catenary.CatenaryX(a, -1*length+length*i/res);
+                y = catenary.CatenaryY(a, -1*length+length*i/res);
+            } else if (flag == 0) {
+                x = catenary.CatenaryX(a, -1*length+2*length*i/res);
+                y = catenary.CatenaryY(a, -1*length+2*length*i/res);
+            } else {
+                x = catenary.CatenaryX(a, length*i/res);
+                y = catenary.CatenaryY(a, length*i/res);
+            }
+            writer.printf("%6.3f %6.3f lineto\n", x, y);
+            if (i%10 == 0) {
+                writer.printf("stroke\n");
+                writer.printf("%6.3f %6.3f moveto\n", x, y);
+            }
+        }
+        writer.printf("stroke\n");
+        writer.flush();
+
         writer.printf("stroke\n");
         writer.flush();
     }

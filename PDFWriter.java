@@ -474,4 +474,120 @@ class PDFWriter {
         }
         raf.writeBytes("S\n");
     }
+
+    /**
+     * Creates a PDF graph for catenary
+     *
+     * @param a 'a' for catenary
+     * @param length half of cLength
+     * @param flag -1 if negative half; 0 whole graph; 1 positive graph
+     * @param catenary declared as final to only give access to its public methods
+     * @throws IOException if an I/O error occurs
+     */
+    public void makeCatenaryGraph(double a, double length, int flag, final Catenary catenary) throws IOException {
+        double percent = (catenary.getPercent() > 100.0 ? catenary.getPercent()/100.0 : 1.0);
+        double minX = catenary.CatenaryX(a, -1*length*percent);
+        double maxX = catenary.CatenaryX(a, length*percent);
+        double maxY = catenary.CatenaryY(a, length*percent);
+
+        // prints title
+        raf.writeBytes("BT\n");
+        raf.writeBytes("/F1 12 Tf\n");
+        raf.writeBytes(String.format("%g %g Td (%s) Tj\n",
+                        (float)(catenary.getPaper().getHeight()/2-5*catenary.getTitle().length()/2),
+                        (float)(catenary.getPaper().getWidth()-60.),
+                        catenary.getTitle()));
+        raf.writeBytes("ET\n");
+        if (catenary.isCaptionEnabled()) {
+            raf.writeBytes("BT\n");
+            raf.writeBytes("/F1 12 Tf\n");
+            if (catenary.getMetric() == Metric.MM) {
+                raf.writeBytes(String.format("%g 60 Td (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) Tj\n",
+                                (float)(catenary.getPaper().getHeight()/2-5*40/2),
+                                length, catenary.getCatenaryDepth(),
+                                catenary.getScaleWidth(), catenary.getScaleHeight()));
+            } else {
+                raf.writeBytes(String.format("%g 60 Td (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) Tj\n",
+                                (float)(catenary.getPaper().getHeight()/2-5*40/2),
+                                length/25.4, catenary.getCatenaryDepth()/25.4,
+                                catenary.getScaleWidth(), catenary.getScaleHeight()));
+            }
+            raf.writeBytes("ET\n");
+        }
+
+        raf.writeBytes(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", Catenary.PT_TO_MM, Catenary.PT_TO_MM));
+        raf.writeBytes(String.format("%g 0 0 %g %g 35 cm\n", catenary.getScaleWidth(), catenary.getScaleHeight(),
+                        catenary.getPaper().getHeight()/2./Catenary.PT_TO_MM));
+
+        if (flag == -1) {
+            raf.writeBytes(String.format("1 0 0 1 %6.3f 20 cm\n", -1*minX/2));
+            maxX = 0.0;
+        } else if (flag == 1) {
+            raf.writeBytes(String.format("1 0 0 1 %6.3f 20 cm\n", minX/2));
+            minX = 0.0;
+        }
+
+        // plots the grid
+        raf.writeBytes("q\n");
+        raf.writeBytes(".35 w\n");
+        raf.writeBytes(".5 G\n");
+        raf.writeBytes(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
+        raf.writeBytes(String.format("0 0 m 0 %6.3f l S\n", maxY));
+        raf.writeBytes(String.format("%6.3f 0 m %6.3f %6.3f l S\n", minX, minX, maxY));
+        raf.writeBytes(String.format("%6.3f 0 m %6.3f %6.3f l S\n", maxX, maxX, maxY));
+        raf.writeBytes("Q\n");
+
+        // plots the curve
+        raf.writeBytes("q\n");
+        raf.writeBytes(".1 w\n");
+        plotCatenaryCurve(a, length, (int)(maxX-minX), flag, catenary);
+        raf.writeBytes("Q\n");
+    }
+
+    /**
+     * Plots the catenary curve on PDF file
+     *
+     * @param a 'a' in catenary
+     * @param length half of cLength
+     * @param res resolution
+     * @param flag -1 negative half, 0 whole curve, 1 positive half
+     * @param catenary catenary instance
+     * @throws IOException if an I/O error occurs
+     */
+    private void plotCatenaryCurve(double a, double length, int res, int flag, final Catenary catenary) throws IOException {
+        if (res < 20) {
+            res = 50;
+        }
+
+        double x = 0.0;
+        double y = 0.0;
+        if (flag <= 0) {
+            x = catenary.CatenaryX(a, -1*length);
+            y = catenary.CatenaryY(a, -1*length);
+        } else {
+            x = catenary.CatenaryX(a, 0.0);
+            y = catenary.CatenaryY(a, 0.0);
+        }
+        raf.writeBytes(String.format("%6.3f %6.3f m\n", x, y));
+        for (int i=1; i<=res; ++i) {
+            if (flag == -1) {
+                x = catenary.CatenaryX(a, -1*length+length*i/res);
+                y = catenary.CatenaryY(a, -1*length+length*i/res);
+            } else if (flag == 0) {
+                x = catenary.CatenaryX(a, -1*length+2*length*i/res);
+                y = catenary.CatenaryY(a, -1*length+2*length*i/res);
+            } else {
+                x = catenary.CatenaryX(a, length*i/res);
+                y = catenary.CatenaryY(a, length*i/res);
+            }
+            raf.writeBytes(String.format("%6.3f %6.3f l\n", x, y));
+            if (i%10 == 0) {
+                raf.writeBytes("S\n");
+                raf.writeBytes(String.format("%6.3f %6.3f m\n", x, y));
+            }
+        }
+        raf.writeBytes("S\n");
+
+        raf.writeBytes("S\n");
+    }
 }
