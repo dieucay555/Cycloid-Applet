@@ -159,14 +159,16 @@ public class Cycloid extends JPanel {
     public double PlayfairX(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
-        double x = R*t-r*Math.cos(t*percent+Math.PI/2);
+        t *= percent;
+        double x = R*t-r*Math.cos(t+Math.PI/2.0);
         x *= g_xs;
         return x;
     }
 
     public double PlayfairX(double t, double percent) {
         // Estimate extent of curve
-        double x = R*t-r*Math.cos(t*percent+Math.PI/2);
+        t *= percent;
+        double x = R*t-r*Math.cos(t+Math.PI/2.0);
         x *= g_xs;
         return x;
     }
@@ -174,13 +176,15 @@ public class Cycloid extends JPanel {
     public double PlayfairY(double t) {
         // Estimate extent of curve
         double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
-        double y = r*Math.sin(t*percent+Math.PI/2)+r;
+        t *= percent;
+        double y = r*Math.sin(t+Math.PI/2)+r;
         y *= g_ys;
         return y;
     }
 
     public double PlayfairY(double t, double percent) {
-        double y = r*Math.sin(t*percent+Math.PI/2)+r;
+        t *= percent;
+        double y = r*Math.sin(t+Math.PI/2.0)+r;
         y *= g_ys;
         return y;
     }
@@ -211,7 +215,7 @@ public class Cycloid extends JPanel {
 
         while (Math.abs(v1-t*R) > 1e-6 && Math.abs(v2-t*R) > 1e-6) {
             tt = (t*R-v1)/(v2-v1)*t2 + (v2-t*R)/(v2-v1)*t1;
-            v = tt-r*Math.cos(tt/R+Math.PI/2);
+            v = tt-r*Math.cos(tt/R+Math.PI/2.0);
             if (v > t*R) {
                 t2 = tt;    v2 = v;
             } else {
@@ -228,8 +232,8 @@ public class Cycloid extends JPanel {
             tt = v1;
         }
 
-        point.X = tt-r*Math.cos(tt/R+Math.PI/2);
-        point.Y = r*Math.sin(tt/R+Math.PI/2);
+        point.X = tt-r*Math.cos(tt/R+Math.PI/2.0);
+        point.Y = r*Math.sin(tt/R+Math.PI/2.0);
         point.X *= g_xs;
         point.Y *= g_ys;
     }
@@ -298,6 +302,14 @@ public class Cycloid extends JPanel {
      * Uses custom written CSV, DXF, PS, PDF utility to write file
      */
     public void writeToFile(File file) {
+        double minX = PlayfairX(-1*Math.PI);
+        double maxX = PlayfairX(Math.PI);
+        boolean split = false;
+
+        if (maxX-minX > (paperSize.getHeight()-30)/PT_TO_MM) {
+            split = true;
+        }
+
         try {
             switch(format) {
                 case CSV:
@@ -307,10 +319,10 @@ public class Cycloid extends JPanel {
                     writeToDXF(file);
                     break;
                 case PDF:
-                    writeToPDF(file);
+                    writeToPDF(file, split);
                     break;
                 case PS:
-                    writeToPS(file);
+                    writeToPS(file, split);
                     break;
             }
         } catch (Exception e) {
@@ -411,21 +423,13 @@ public class Cycloid extends JPanel {
      * Writes cycloid to PDF file
      *
      * @param file filename
+     * @param split true if split into 2 pages, 0 otherwise
      */
-    void writeToPDF(File file) throws FileNotFoundException {
+    void writeToPDF(File file, boolean split) throws FileNotFoundException {
         PDFWriter writer = new PDFWriter(file);
         try {
             writer.openPDF();
             writer.setPageSize(paperSize.getHeight(), paperSize.getWidth());
-
-            double minX = PlayfairX(-1*Math.PI);
-            double maxX = PlayfairX(Math.PI);
-            boolean split = false;
-
-            if (g_xs*(maxX-minX) > (paperSize.getHeight()-30)/PT_TO_MM) {
-                split = true;
-                // TODO if eps true then write error message
-            }
 
             if (!split) {
                 writer.simpleHeaders();
@@ -434,6 +438,7 @@ public class Cycloid extends JPanel {
                 writer.endStreamObj();
             } else {
                 writer.multiPageHeaders(2);
+
                 writer.beginStreamObj(8/*pc+6*/);
                 writer.makeCycloidGraph(-1, this);
                 writer.endStreamObj();
@@ -442,7 +447,6 @@ public class Cycloid extends JPanel {
                 writer.makeCycloidGraph(1, this);
                 writer.endStreamObj();
             }
-
             writer.writeXrefs();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -462,8 +466,8 @@ public class Cycloid extends JPanel {
      * @param file filename
      * @param split true if split into 2 pages, 0 otherwise
      */
-    void writeToPS(File file) throws IOException {
-        PSWriter writer = new PSWriter(file);
+    void writeToPS(File file, boolean split) throws IOException {
+        PSWriter writer = new PSWriter(file, split);
         try {
             writer.writeHeader();
             writer.makeCycloidGraph(this);

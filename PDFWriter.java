@@ -359,7 +359,6 @@ class PDFWriter {
     public void makeCycloidGraph(int flag, final Cycloid cycloid) throws IOException {
         double minX = cycloid.PlayfairX(-1*Math.PI);
         double maxX = cycloid.PlayfairX(Math.PI);
-        Integer page = 0;
 
         // prints title
         raf.writeBytes("BT\n");
@@ -387,7 +386,7 @@ class PDFWriter {
         }
 
         raf.writeBytes(String.format("%5.4f 0 0 %5.4f 0 0 cm\n", Cycloid.PT_TO_MM, Cycloid.PT_TO_MM));
-        raf.writeBytes(String.format("%g 0 0 %g 50 cm\n", cycloid.getScaleWidth(), cycloid.getScaleHeight(),
+        raf.writeBytes(String.format("%g 0 0 %g %g 50 cm\n", cycloid.getScaleWidth(), cycloid.getScaleHeight(),
                         cycloid.getPaper().getHeight()/2.0/Cycloid.PT_TO_MM));
 
         if (flag == -1) {
@@ -460,14 +459,14 @@ class PDFWriter {
         raf.writeBytes(String.format("%6.3f %6.3f l\n", x, y));
 
         if (flag <= 0) {
-            x = cycloid.PlayfairX(-1*Math.PI, 1.0f);
+            x = cycloid.PlayfairX(-1*Math.PI, 1.0);
             y = 0.0;
             raf.writeBytes(String.format("%6.3f %6.3f m\n", x, y));
             y = 2*cycloid.getr()+10;
             raf.writeBytes(String.format("%6.3f %6.3f l\n", x, y));
         }
         if (flag >= 0) {
-            x = cycloid.PlayfairX(Math.PI, 1.0f);
+            x = cycloid.PlayfairX(Math.PI, 1.0);
             y = 0.0;
             raf.writeBytes(String.format("%6.3f %6.3f m\n", x, y));
             y = 2*cycloid.getr()+10;

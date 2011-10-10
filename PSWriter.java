@@ -14,14 +14,17 @@ class PSWriter {
     private int page = 0;
     private int top = 0;
     private int eps = 0; // not sure if this is still used
+    private boolean split = false;
 
     /**
      * Handles creating PS file from cycloid/catenary user specified.
      *
      * @param file filename the user specified
+     * @param split true if split in 2 pages; false otherwise
      */
-    public PSWriter(File file) throws IOException {
+    public PSWriter(File file, boolean split) throws IOException {
         writer = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+        this.split = split;
     }
 
     /**
@@ -32,7 +35,7 @@ class PSWriter {
         writer.printf("%%%%Title: Trachoids\n");
         writer.printf("%%%%DocumentFonts: Times-Roman\n");
         writer.printf("%%%%Orientation: Landscape\n");
-        writer.printf("%%%%Pages: (at end)\n");
+        writer.printf("%%%%Pages: %d\n", (split?2:1));
         writer.printf("%%%%EndComments\n");
         writer.flush();
     }
@@ -79,7 +82,8 @@ class PSWriter {
             writer.printf("showpage\n");
         }
         if (eps == 0) {
-            writer.printf("%%%%Pages: %d\n", page);
+            // TODO: this seems like not working
+            //writer.printf("%%%%Pages: %d\n", page);
         }
         writer.printf("%%%%EOF\n");
         writer.flush();
@@ -106,9 +110,9 @@ class PSWriter {
      */
     public void makeCycloidGraph(final Cycloid cycloid) {
         double minX = cycloid.PlayfairX(-1*Math.PI);
-        double maxX = cycloid.PlayfairY(Math.PI);
+        double maxX = cycloid.PlayfairX(Math.PI);
 
-        if (maxX-minX > (cycloid.getPaper().getHeight()-30)/Cycloid.PT_TO_MM) {
+        if (split) {
             if (top == 1) {
                 writer.printf("grestore\n");
                 writer.printf("showpage\n");
@@ -214,12 +218,12 @@ class PSWriter {
             if (cycloid.getCycloidWidth() > 0 && cycloid.getCycloidHeight() > 0) {
                 if (cycloid.getMetric() == Metric.MM) {
                     writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
-                                    + "pop 2 div neg 0 removeto show \n",
+                                    + "pop 2 div neg 0 rmoveto show \n",
                                     cycloid.getCycloidWidth(), cycloid.getCycloidHeight(),
                                     cycloid.getScaleWidth(), cycloid.getScaleHeight());
                 } else {
                     writer.printf("0 -8 moveto (W=%4.2f,  h=%4.2f  scale=%4.3f %4.3f) dup stringwidth "
-                                    + "pop 2 div neg 0 removeto show \n",
+                                    + "pop 2 div neg 0 rmoveto show \n",
                                     cycloid.getCycloidWidth()/25.4, cycloid.getCycloidHeight()/25.4,
                                     cycloid.getScaleWidth(), cycloid.getScaleHeight());
                 }
@@ -347,15 +351,15 @@ class PSWriter {
         writer.printf("%6.3f %6.3f lineto\n", x, y);
 
         if (flag <= 0) {
-            x = cycloid.PlayfairX(-1*Math.PI, 1.0f);
-            y = 0;
+            x = cycloid.PlayfairX(-1*Math.PI, 1.0);
+            y = 0.0;
             writer.printf("%6.3f %6.3f moveto\n", x, y);
             y = 2*cycloid.getr()+10;
             writer.printf("%6.3f %6.3f lineto\n", x, y);
         }
         if (flag >= 0) {
-            x = cycloid.PlayfairX(Math.PI, 1.0f);
-            y = 0;
+            x = cycloid.PlayfairX(Math.PI, 1.0);
+            y = 0.0;
             writer.printf("%6.3f %6.3f moveto\n", x, y);
             y = 2*cycloid.getr()+10;
             writer.printf("%6.3f %6.3f lineto\n", x, y);
