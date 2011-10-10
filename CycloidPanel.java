@@ -16,6 +16,8 @@ class CycloidPanel extends JPanel {
     private final JButton clearCycloid;
     private final JRadioButton mmButton;
     private final JRadioButton inchButton;
+    private final JLabel widthLabel;
+    private final JLabel heightLabel;
     private final JTextField widthText;
     private final JTextField heightText;
     private final JTextField percentText;
@@ -36,7 +38,12 @@ class CycloidPanel extends JPanel {
     private final JTextField scaleHeightText;
 
     private boolean redrawEnabled = true;
-    private boolean autoFileNameEnabled = false;
+    // for autoFileName
+    private boolean autoFileNameEnabled = true;
+    private String autoFileName = "";
+    private double width = 200.00;
+    private double height = 20.00;
+    private Format format = Format.PDF;
 
     public CycloidPanel() {
         super(new BorderLayout());
@@ -45,6 +52,7 @@ class CycloidPanel extends JPanel {
         createCycloid.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = new JFileChooser();
+                fc.setSelectedFile(new File(autoFileName));
                 int returnVal = fc.showSaveDialog(CycloidPanel.this);
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = fc.getSelectedFile();
@@ -68,6 +76,22 @@ class CycloidPanel extends JPanel {
         catenaryPanel = new Catenary();
         catenaryPanel.setDoubleBuffered(true);
         drawPane.addTab("Catenary", null, catenaryPanel, "Draws Catenary");
+        drawPane.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent evt) {
+                if (widthLabel != null && heightLabel != null) {
+                    if (drawPane.getSelectedIndex() == 0) {
+                        widthLabel.setText("Width");
+                        heightLabel.setText("Height");
+                    } else {
+                        widthLabel.setText("Length");
+                        heightLabel.setText("Depth");
+                    }
+                }
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
+            }
+            });
         add(drawPane, BorderLayout.CENTER);
 
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -96,8 +120,8 @@ class CycloidPanel extends JPanel {
         topLeftPanel.add(inchButton, BorderLayout.EAST);
 
         // width/height specifiers
-        JLabel widthLabel = new JLabel("Width");
-        JLabel heightLabel = new JLabel("Height");
+        widthLabel = new JLabel("Width");
+        heightLabel = new JLabel("Height");
         JPanel widthPanel = new JPanel(new FlowLayout());
         widthPanel.add(widthLabel);
         widthText = new JTextField(6);
@@ -109,12 +133,17 @@ class CycloidPanel extends JPanel {
                     cycloidPanel.repaint();
                     catenaryPanel.repaint();
                 }
+                width = Double.parseDouble(widthText.getText());
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 // prevent NullPointerException when a user erases all text in the field
                 if (widthText.getText().length() == 0) {
                     cycloidPanel.setCycloidWidth(0.00);
                     catenaryPanel.setCatenaryLength(0.00);
+                    width = 0.00;
                 } else {
                     cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
                     catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
@@ -122,6 +151,10 @@ class CycloidPanel extends JPanel {
                         cycloidPanel.repaint();
                         catenaryPanel.repaint();
                     }
+                    width = Double.parseDouble(widthText.getText());
+                }
+                if (autoFileNameEnabled) {
+                    generateFileName();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -140,11 +173,16 @@ class CycloidPanel extends JPanel {
                     cycloidPanel.repaint();
                     catenaryPanel.repaint();
                 }
+                height = Double.parseDouble(heightText.getText());
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             public void removeUpdate(DocumentEvent e) {
                 if (heightText.getText().length() == 0) {
                     cycloidPanel.setCycloidHeight(0.00);
                     catenaryPanel.setCatenaryDepth(0.00);
+                    height = 0.00;
                 } else {
                     cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
                     catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
@@ -152,6 +190,10 @@ class CycloidPanel extends JPanel {
                         cycloidPanel.repaint();
                         catenaryPanel.repaint();
                     }
+                    height = Double.parseDouble(heightText.getText());
+                }
+                if (autoFileNameEnabled) {
+                    generateFileName();
                 }
             }
             public void changedUpdate(DocumentEvent e) {}
@@ -225,15 +267,15 @@ class CycloidPanel extends JPanel {
         topRightPanel.add(crPanel, BorderLayout.SOUTH);
 
         // auto filename checkbox and textbox and title
-        autoFileNameEnable = new JCheckBox("Auto File Name");
+        autoFileNameEnable = new JCheckBox("Auto File Name", null, true);
         autoFileNameEnable.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 autoFileNameEnabled = e.getStateChange() == ItemEvent.SELECTED;
-                // generate filename to use
             }
             });
         JLabel fileNameLabel = new JLabel("File name");
         fileNameText = new JTextField(20);
+        fileNameText.setText("cycloid-w200.00-h20.00.pdf"); // default name
         JPanel nameLeftPanel = new JPanel(new FlowLayout());
         nameLeftPanel.add(autoFileNameEnable);
         JPanel nameRightPanel = new JPanel(new FlowLayout());
@@ -320,6 +362,10 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setFormat(Format.PDF);
                 catenaryPanel.setFormat(Format.PDF);
+                format = Format.PDF;
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             });
         psButton = new JRadioButton("PS");
@@ -327,6 +373,10 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setFormat(Format.PS);
                 catenaryPanel.setFormat(Format.PS);
+                format = Format.PS;
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             });
         dxfButton = new JRadioButton("DXF");
@@ -334,6 +384,10 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setFormat(Format.DXF);
                 catenaryPanel.setFormat(Format.DXF);
+                format = Format.DXF;
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             });
         csvButton = new JRadioButton("CSV");
@@ -341,6 +395,10 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setFormat(Format.CSV);
                 catenaryPanel.setFormat(Format.CSV);
+                format = Format.CSV;
+                if (autoFileNameEnabled) {
+                    generateFileName();
+                }
             }
             });
         ButtonGroup formatGroup = new ButtonGroup();
@@ -435,5 +493,33 @@ class CycloidPanel extends JPanel {
         topPanel.add(topRightPanel, BorderLayout.EAST);
         topPanel.add(settingsPanel, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.SOUTH);
+    }
+
+    private void generateFileName() {
+        // 0 - cycloid; 1 - catenary
+        if (drawPane.getSelectedIndex() == 0) {
+            autoFileName = "cycloid";
+            autoFileName += String.format("-w%4.2f-h%4.2f", width, height);
+        } else {
+            autoFileName = "catenary";
+            autoFileName += String.format("-l%4.2f-d%4.2f", width, height);
+        }
+        switch (format) {
+            case PDF:
+                autoFileName += ".pdf";
+                break;
+            case PS:
+                autoFileName += ".ps";
+                break;
+            case DXF:
+                autoFileName += ".dxf";
+                break;
+            case CSV:
+                autoFileName += ".csv";
+                break;
+        }
+        if (fileNameText != null) {
+            fileNameText.setText(autoFileName);
+        }
     }
 }
