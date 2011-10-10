@@ -538,6 +538,10 @@ class PDFWriter {
         raf.writeBytes(".5 G\n");
         raf.writeBytes(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
         raf.writeBytes(String.format("0 0 m 0 %6.3f l S\n", maxY));
+        // writes horizontal grid lines
+        raf.writeBytes(String.format("%6.3f 0 m %6.3f 0 l S\n", minX, maxX));
+        raf.writeBytes(String.format("%6.3f 10 m %6.3f 10 l S\n", minX, maxX));
+        raf.writeBytes(String.format("%6.3f 20 m %6.3f 20 l S\n", minX, maxX));
         raf.writeBytes(String.format("%6.3f 0 m %6.3f %6.3f l S\n", minX, minX, maxY));
         raf.writeBytes(String.format("%6.3f 0 m %6.3f %6.3f l S\n", maxX, maxX, maxY));
         raf.writeBytes("Q\n");

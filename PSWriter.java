@@ -377,9 +377,9 @@ class PSWriter {
      */
     public void makeCatenaryGraph(double a, double length, final Catenary catenary) {
         double percent = (catenary.getPercent() > 100.0 ? catenary.getPercent()/100.0 : 1.0);
-        double minX = catenary.CatenaryX(-1*length*percent);
-        double maxX = catenary.CatenaryX(length*percent);
-        double maxY = catenary.CatenaryY(length*percent);
+        double minX = catenary.CatenaryX(a, -1*length*percent);
+        double maxX = catenary.CatenaryX(a, length*percent);
+        double maxY = catenary.CatenaryY(a, length*percent);
 
         if (split) {
             if (top == 1) {
@@ -506,9 +506,9 @@ class PSWriter {
         writer.printf("0 0 moveto 0 %6.3f lineto stroke\n", maxY);
         writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", minX, minX, maxY);
         writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", maxX, maxX, maxY);
-        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 0 moveto %6.3f 0 lineto stroke\n", minX, maxX);
+        writer.printf("%6.3f 10 moveto %6.3f 10 lineto stroke\n", minX, maxX);
+        writer.printf("%6.3f 20 moveto %6.3f 20 lineto stroke\n", minX, maxX);
         writer.printf("grestore\n");
 
         // finally plotting the curve
@@ -556,9 +556,9 @@ class PSWriter {
         writer.printf("0 0 moveto 0 %6.3f lineto stroke\n", maxY);
         writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", minX, minX, maxY);
         writer.printf("%6.3f 0 moveto %6.3f %6.3f lineto stroke\n", maxX, maxX, maxY);
-        writer.printf("%6.3f 0 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 10 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
-        writer.printf("%6.3f 20 moveto %6.3f 0 rlineto stroke\n", minX, maxX-minX);
+        writer.printf("%6.3f 0 moveto %6.3f 0 lineto stroke\n", minX, maxX);
+        writer.printf("%6.3f 10 moveto %6.3f 10 lineto stroke\n", minX, maxX);
+        writer.printf("%6.3f 20 moveto %6.3f 20 lineto stroke\n", minX, maxX);
         writer.printf("grestore\n");
 
         // plotting the curve again
@@ -589,11 +589,11 @@ class PSWriter {
         double x = 0.0;
         double y = 0.0;
         if (flag <= 0) {
-            x = catenary.CatenaryX(-1*length);
-            y = catenary.CatenaryY(-1*length);
+            x = catenary.CatenaryX(a, -1*length);
+            y = catenary.CatenaryY(a, -1*length);
         } else {
-            x = catenary.CatenaryX(0.0);
-            y = catenary.CatenaryY(0.0);
+            x = catenary.CatenaryX(a, 0.0);
+            y = catenary.CatenaryY(a, 0.0);
         }
 
         writer.printf("%6.3f %6.3f moveto\n", x, y);
