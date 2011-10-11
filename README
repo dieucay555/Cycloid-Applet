@@ -1,0 +1,6 @@
+Cycloid Applet is a program to generate graphs of Curtate Cycloids, which are the curves produced by a point within a wheel, when that wheel is rotated.
+The intended users of cycloid are makers of stringed instruments, but the program is available for anyone to use. Cycloid creates the graphs in PDF, PostScript,
+or DXF format.
+
+This is how I created the signed jar:
+jarsigner -keystore vkeystore -storepass password -keypass password -signedjar CycloidAppletS.jar CycloidApplet.jar cycloid
