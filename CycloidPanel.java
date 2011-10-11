@@ -40,9 +40,13 @@ class CycloidPanel extends JPanel {
     // for autoFileName
     private boolean autoFileNameEnabled = true;
     private String autoFileName = "";
-    private double width = 200.00;
-    private double height = 20.00;
+    private double width = 200.00d;
+    private double height = 20.00d;
     private Format format = Format.PDF;
+
+    // for mm/inch automatic conversion
+    private boolean isMM = true;
+    private boolean isINCH = false;
 
     public CycloidPanel() {
         super(new BorderLayout());
@@ -108,6 +112,20 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setMetric(Metric.MM);
                 catenaryPanel.setMetric(Metric.MM);
+                if (isINCH) {
+                    width *= 25.4d;
+                    height *= 25.4d;
+                }
+                isMM = true;
+                isINCH = false;
+                if (widthText != null && heightText != null) {
+                    double tmpWidth = width;
+                    double tmpHeight = height;
+                    widthText.setText(String.format("%4.2f", width));
+                    heightText.setText(String.format("%4.2f", height));
+                    width = tmpWidth;
+                    height = tmpHeight; // only show rounded value to user but keep full precision internally
+                }
             }
             });
         inchButton = new JRadioButton("inch");
@@ -115,6 +133,20 @@ class CycloidPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 cycloidPanel.setMetric(Metric.INCH);
                 catenaryPanel.setMetric(Metric.INCH);
+                if (isMM) {
+                    width /= 25.4d;
+                    height /= 25.4d;
+                }
+                isMM = false;
+                isINCH = true;
+                if (widthText != null && heightText != null) {
+                    double tmpWidth = width;
+                    double tmpHeight = height;
+                    widthText.setText(String.format("%4.2f", width));
+                    heightText.setText(String.format("%4.2f", height));
+                    width = tmpWidth;
+                    height = tmpHeight; // remember full precision
+                }
             }
             });
         ButtonGroup mmInchGroup = new ButtonGroup();
@@ -147,7 +179,7 @@ class CycloidPanel extends JPanel {
                 if (widthText.getText().length() == 0) {
                     cycloidPanel.setCycloidWidth(0.00);
                     catenaryPanel.setCatenaryLength(0.00);
-                    width = 0.00;
+                    width = 0.00d;
                 } else {
                     cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
                     catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
@@ -186,7 +218,7 @@ class CycloidPanel extends JPanel {
                 if (heightText.getText().length() == 0) {
                     cycloidPanel.setCycloidHeight(0.00);
                     catenaryPanel.setCatenaryDepth(0.00);
-                    height = 0.00;
+                    height = 0.00d;
                 } else {
                     cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
                     catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
