@@ -302,11 +302,20 @@ public class Cycloid extends JPanel {
      * Uses custom written CSV, DXF, PS, PDF utility to write file
      */
     public void writeToFile(File file) {
+        // need to adjust width/height for inch
+        boolean whAdjusted = false;
+        double prevCWidth = cWidth;
+        double prevCHeight = cHeight;
+        if (metric != Metric.MM && format != Format.DXF) {
+            whAdjusted = true;
+            setCycloidWidth(cWidth*25.4);
+            setCycloidHeight(cHeight*25.4);
+        }
         double minX = PlayfairX(-1*Math.PI);
         double maxX = PlayfairX(Math.PI);
         boolean split = false;
 
-        if (maxX-minX > (paperSize.getHeight()-30)/PT_TO_MM) {
+        if (g_xs*(maxX-minX) > (paperSize.getHeight()-30)/PT_TO_MM) {
             split = true;
         }
 
@@ -330,6 +339,12 @@ public class Cycloid extends JPanel {
                 e.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // revert back to original width/height
+            if (whAdjusted) {
+                setCycloidWidth(prevCWidth);
+                setCycloidHeight(prevCHeight);
+            }
         }
     }
 

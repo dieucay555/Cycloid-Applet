@@ -287,6 +287,15 @@ class Catenary extends JPanel {
     }
 
     public void writeToFile(File file) {
+        // need to adjust width/height for inch
+        boolean ldAdjusted = false;
+        double prevCLength = cLength;
+        double prevCDepth = cDepth;
+        if (metric != Metric.MM && format != Format.DXF) {
+            ldAdjusted = true;
+            setCatenaryLength(cLength*25.4);
+            setCatenaryDepth(cDepth*25.4);
+        }
         double a = computeA(cLength/2., cDepth);
         double length = cLength/2.;
         boolean split = false;
@@ -317,6 +326,11 @@ class Catenary extends JPanel {
                 e.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (ldAdjusted) {
+                setCatenaryLength(prevCLength);
+                setCatenaryDepth(prevCDepth);
+            }
         }
     }
 
