@@ -13,7 +13,6 @@ class CycloidPanel extends JPanel {
     private Catenary catenaryPanel;
 
     private final JButton createCycloid;
-    private final JButton clearCycloid;
     private final JRadioButton mmButton;
     private final JRadioButton inchButton;
     private final JLabel widthLabel;
@@ -66,7 +65,6 @@ class CycloidPanel extends JPanel {
                 }
             }
             });
-        clearCycloid = new JButton("Clear");
 
         // Use JTabbedPane to display both Cycloid and Catenary under separate tabs
         drawPane = new JTabbedPane();
@@ -78,6 +76,12 @@ class CycloidPanel extends JPanel {
         drawPane.addTab("Catenary", null, catenaryPanel, "Draws Catenary");
         drawPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent evt) {
+                // write to csv is only available for cycloid
+                if (drawPane.getSelectedIndex() == 1) {
+                    csvButton.setEnabled(false);
+                } else {
+                    csvButton.setEnabled(true);
+                }
                 if (widthLabel != null && heightLabel != null) {
                     if (drawPane.getSelectedIndex() == 0) {
                         widthLabel.setText("Width");
@@ -208,7 +212,6 @@ class CycloidPanel extends JPanel {
         topLeftPanel.add(whPanel, BorderLayout.SOUTH);
 
         JPanel topRightPanel = new JPanel(new BorderLayout());
-        topRightPanel.add(clearCycloid, BorderLayout.NORTH);
 
         // percent text box
         JLabel percentLabel = new JLabel("Percent");

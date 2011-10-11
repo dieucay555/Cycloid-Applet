@@ -349,15 +349,16 @@ public class Cycloid extends JPanel {
 
         pointsFile.clear(); // ArrayList.clear()
 
+        double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
         for (int i=0; i<=res; i++) {
             try {
                 Point point = new Point();
-                FilePlayfair(2*Math.PI*i/res-Math.PI, point);
+                FilePlayfair(2*Math.PI*percent*i/res-Math.PI*percent, point);
                 pointsFile.addPoint(point);
             } catch (Exception e) {
                 // bails out if points are not complete
                 JOptionPane.showMessageDialog(this,
-                    "Exception occurred while processing to write to CSV file.",
+                    "writeToCSV: " + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
                 return;
@@ -369,7 +370,7 @@ public class Cycloid extends JPanel {
             writer.write2DPolyLine(pointsFile);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Exception occurred while writing to CSV file.",
+                "writeToCSV: " + e.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         } finally {

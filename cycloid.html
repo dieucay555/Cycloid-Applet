@@ -3,12 +3,18 @@
 <title>Cyloid Applet</title>
 </head>
 <body>
+<script type="text/javascript">
+onload = function()
+{
+    document.getElementByTagName('applet')[0].focus();
+}
+</script>
 <H1>Cycloid</H1>
 <br>
 Cycloid Applet is a program to generate graphcs of Curtate Cycloids, which are the curves produced by a point within a wheel, when that wheel is rotated.
 The intended users of cycloid applet are makers of stringed instruments, but the program is available for anyone to use. Cycloid Applet creates the graphs
 in PDF, PostScript, or DXF format.
 <br>
-<applet width="600" height="500" code="CycloidApplet.class"></applet>
+<applet width="600" height="500" code="CycloidApplet.class" archive="CycloidAppletS.jar"></applet>
 </body>
 </html>
