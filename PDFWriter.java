@@ -509,12 +509,12 @@ class PDFWriter {
             if (catenary.getMetric() == Metric.MM) {
                 raf.writeBytes(String.format("%g 60 Td (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) Tj\n",
                                 (float)(catenary.getPaper().getHeight()/2-5*40/2),
-                                length, catenary.getCatenaryDepth(),
+                                catenary.getCatenaryLength(), catenary.getCatenaryDepth(),
                                 catenary.getScaleWidth(), catenary.getScaleHeight()));
             } else {
                 raf.writeBytes(String.format("%g 60 Td (L=%4.2f,  D=%4.2f  scale=%4.3f %4.3f) Tj\n",
                                 (float)(catenary.getPaper().getHeight()/2-5*40/2),
-                                length/25.4, catenary.getCatenaryDepth()/25.4,
+                                catenary.getCatenaryLength()/25.4, catenary.getCatenaryDepth()/25.4,
                                 catenary.getScaleWidth(), catenary.getScaleHeight()));
             }
             raf.writeBytes("ET\n");
