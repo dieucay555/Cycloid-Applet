@@ -17,7 +17,6 @@ as the first entry and export the buildfile again. -->
     <property name="signed-jarfile" value="CycloidApplet.jar"/>
     <target name="init">
         <mkdir dir="bin"/>
-        <mkdir dir="dist"/>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="src">
                 <exclude name="**/*.java"/>
