@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+Any modifications will be overwritten.
+To include a user specific buildfile here, simply create one in the same
+directory with the processing instruction <?eclipse.ant.import?>
+as the first entry and export the buildfile again. -->
+<project basedir="." default="build" name="cycloid">
+    <property environment="env"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.6"/>
+    <property name="source" value="1.6"/>
+    <property name="keystore" value="vkeystore"/>
+    <path id="cycloid.classpath">
+        <pathelement location="bin"/>
+    </path>
+    <property name="jarfile" value="CycloidApplet.jar"/>
+    <property name="signed-jarfile" value="CycloidApplet.jar"/>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <mkdir dir="dist"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="clean,init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="cycloid.classpath"/>
+        </javac>
+    </target>
+    <target depends="build-project" name="jar">
+        <echo message="Deleting ${jarfile}"/>
+        <delete file="${jarfile}"/>
+        <jar destfile="${jarfile}" basedir="bin">
+            <manifest>
+                <attribute name="Main-Class" value="CycloidApplet"/>
+                <attribute name="Specification-Title" value="Cycloid Java Applet"/>
+                <attribute name="Specification-Version" value="4.0.0"/>
+                <attribute name="Specification-Vendor" value="University of Waterloo"/>
+                <attribute name="Implementation-Title" value="CycloidApplet"/>
+                <attribute name="Implementation-Version" value="1.0.0"/>
+                <attribute name="Implementation-Vendor" value="Stephen Mann"/>
+            </manifest>
+        </jar>
+    </target>
+    <target depends="jar" name="sign-jar">
+        <signjar
+            jar="${jarfile}"
+            alias="cycloid_no_expire"
+            storepass="password"
+            keystore="${keystore}"
+            keypass="password"
+            signedjar="${signed-jarfile}"
+            verbose="true"
+            >
+        </signjar>
+    </target>
+</project>
