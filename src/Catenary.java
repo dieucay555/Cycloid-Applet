@@ -159,6 +159,23 @@ class Catenary extends JPanel {
     }
 
     /**
+     * Function FileCatenary
+     * Evaluates the catenary at a t value which is stored to a file
+     * Returns both X/Y coordinates as this function is a bit expensive
+     */
+    void FileCatenary(double t, Point point) throws Exception {
+        double t0 = 0.0; double v0 = 0.0;
+        double t1 = 0.0; double v1 = 0.0;
+        double t2 = 0.0; double v2 = 0.0;
+        double tt = 0.0; double v = 0.0;
+        int count = 0;
+
+        // Need to find out about the implementation
+        point.X = CatenaryX(t);
+        point.Y = CatenaryY(t);
+    }
+
+    /**
      * Function: draw
      * Receives Graphics object from JComponent to draw itself
      */
@@ -309,7 +326,7 @@ class Catenary extends JPanel {
         try {
             switch(format) {
                 case CSV:
-                    // disabled!!!
+                    writeToCSV(file, a, length);
                     break;
                 case DXF:
                     writeToDXF(file, a, length);
@@ -330,6 +347,55 @@ class Catenary extends JPanel {
             if (ldAdjusted) {
                 setCatenaryLength(prevCLength);
                 setCatenaryDepth(prevCDepth);
+            }
+        }
+    }
+
+    /**
+     * Writes catenary to CSV file
+     *
+     * @param file filename
+     * @param a 'a' for catenary curve
+     * @param length half of cLength
+     */
+    void writeToCSV(File file, double a, double length) throws IOException {
+        double percent = (this.percent > 100.0 ? this.percent/100.0 : 1.0);
+        double minX = CatenaryX(-1*length*percent);
+        double maxX = CatenaryX(length*percent);
+
+        int res = (int)(maxX-minX)/2;
+        if (res < 20) {
+            res = 50;
+        }
+
+        pointsFile.clear();
+
+        for (int i=0; i<=res; i++) {
+            try {
+                Point point = new Point();
+                FileCatenary(2*length*percent*i/res-length*percent, point);
+                pointsFile.addPoint(point);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "writeToCSV: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        CSVWriter writer = new CSVWriter(file);
+        try {
+            writer.write2DPolyLine(pointsFile);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "writeToCSV: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // error might have happened before writer is constructed
+            if (writer != null) {
+                writer.closeFile();
             }
         }
     }

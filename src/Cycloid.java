@@ -210,7 +210,7 @@ public class Cycloid extends JPanel {
         } else if (v1 < t*R && t*R < v2) {
             // do nothing
         } else {
-            throw new Exception("numerical error");
+            //throw new Exception("numerical error");
         }
 
         while (Math.abs(v1-t*R) > 1e-6 && Math.abs(v2-t*R) > 1e-6) {
@@ -223,7 +223,8 @@ public class Cycloid extends JPanel {
             }
             count++;
             if (count > 1000) {
-                throw new Exception("convergence too slow");
+                throw new Exception("The cycloid is not "
+                    + "one-to-one(injective) function.");
             }
         }
         if (Math.abs(v1-t*R) > 1e-6) {
@@ -233,7 +234,7 @@ public class Cycloid extends JPanel {
         }
 
         point.X = tt-r*Math.cos(tt/R+Math.PI/2.0);
-        point.Y = r*Math.sin(tt/R+Math.PI/2.0);
+        point.Y = r*Math.sin(tt/R+Math.PI/2.0)+r;
         point.X *= g_xs;
         point.Y *= g_ys;
     }
