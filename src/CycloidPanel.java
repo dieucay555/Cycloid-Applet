@@ -20,6 +20,8 @@ class CycloidPanel extends JPanel {
     private final JTextField widthText;
     private final JTextField heightText;
     private final JTextField percentText;
+    private final JSlider widthSlider;
+    private final JSlider heightSlider;
     private final JCheckBox captionEnable;
     private final JCheckBox redrawEnable;
     private final JCheckBox autoFileNameEnable;
@@ -35,6 +37,10 @@ class CycloidPanel extends JPanel {
     private final JRadioButton csvButton;
     private final JTextField scaleWidthText;
     private final JTextField scaleHeightText;
+
+    private boolean widthTextModified = false;
+    private boolean heightTextModified = false;
+    private boolean metricModified = false;
 
     private boolean redrawEnabled = true;
     // for autoFileName
@@ -109,14 +115,34 @@ class CycloidPanel extends JPanel {
                 if (isINCH) {
                     width *= 25.4d;
                     height *= 25.4d;
+                    if (widthSlider != null) {
+                        metricModified = true;
+                        widthSlider.setMaximum(100000);
+                        widthSlider.setMajorTickSpacing(100);
+                        widthSlider.setMinorTickSpacing(1);
+                        widthSlider.setValue((int)(width*100));
+                        metricModified = false;
+                    }
+                    if (heightSlider != null) {
+                        metricModified = true;
+                        heightSlider.setMaximum(25000);
+                        heightSlider.setMajorTickSpacing(100);
+                        heightSlider.setMinorTickSpacing(1);
+                        heightSlider.setValue((int)(height*100));
+                        metricModified = false;
+                    }
                 }
                 isMM = true;
                 isINCH = false;
                 if (widthText != null && heightText != null) {
                     double tmpWidth = width;
                     double tmpHeight = height;
+                    widthTextModified = true;
+                    heightTextModified = true;
                     widthText.setText(String.format("%4.2f", width));
                     heightText.setText(String.format("%4.2f", height));
+                    widthTextModified = false;
+                    heightTextModified = false;
                     width = tmpWidth;
                     height = tmpHeight; // only show rounded value to user but keep full precision internally
                 }
@@ -130,14 +156,35 @@ class CycloidPanel extends JPanel {
                 if (isMM) {
                     width /= 25.4d;
                     height /= 25.4d;
+                    if (widthSlider != null) {
+                        metricModified = true;
+                        widthSlider.setMaximum(4000);
+                        widthSlider.setMajorTickSpacing(10);
+                        widthSlider.setMinorTickSpacing(1);
+                        titleText.setText(Integer.toString((int)(width*100)));
+                        widthSlider.setValue((int)(width*100));
+                        metricModified = false;
+                    }
+                    if (heightSlider != null) {
+                        metricModified = true;
+                        heightSlider.setMaximum(1000);
+                        heightSlider.setMajorTickSpacing(10);
+                        heightSlider.setMinorTickSpacing(1);
+                        heightSlider.setValue((int)(height*100));
+                        metricModified = false;
+                    }
                 }
                 isMM = false;
                 isINCH = true;
                 if (widthText != null && heightText != null) {
                     double tmpWidth = width;
                     double tmpHeight = height;
+                    widthTextModified = true;
+                    heightTextModified = true;
                     widthText.setText(String.format("%4.2f", width));
                     heightText.setText(String.format("%4.2f", height));
+                    widthTextModified = false;
+                    heightTextModified = false;
                     width = tmpWidth;
                     height = tmpHeight; // remember full precision
                 }
@@ -146,8 +193,10 @@ class CycloidPanel extends JPanel {
         ButtonGroup mmInchGroup = new ButtonGroup();
         mmInchGroup.add(mmButton);
         mmInchGroup.add(inchButton);
-        topLeftPanel.add(mmButton, BorderLayout.WEST);
-        topLeftPanel.add(inchButton, BorderLayout.EAST);
+        JPanel metricPanel = new JPanel(new FlowLayout());
+        metricPanel.add(mmButton);
+        metricPanel.add(inchButton);
+        topLeftPanel.add(metricPanel);
 
         // width/height specifiers
         widthLabel = new JLabel("Width");
@@ -157,35 +206,42 @@ class CycloidPanel extends JPanel {
         widthText = new JTextField(6);
         widthText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
+                widthTextModified = true;
+                width = Double.parseDouble(widthText.getText());
+                cycloidPanel.setCycloidWidth(width);
+                catenaryPanel.setCatenaryLength(width);
                 if (redrawEnabled) {
                     cycloidPanel.repaint();
                     catenaryPanel.repaint();
                 }
-                width = Double.parseDouble(widthText.getText());
+                if (widthSlider != null) widthSlider.setValue((int)(width*100));
                 if (autoFileNameEnabled) {
                     generateFileName();
                 }
+                widthTextModified = false;
             }
             public void removeUpdate(DocumentEvent e) {
+                widthTextModified = true;
                 // prevent NullPointerException when a user erases all text in the field
                 if (widthText.getText().length() == 0) {
                     cycloidPanel.setCycloidWidth(0.00);
                     catenaryPanel.setCatenaryLength(0.00);
                     width = 0.00d;
+                    if (widthSlider != null) widthSlider.setValue(0);
                 } else {
-                    cycloidPanel.setCycloidWidth(Double.parseDouble(widthText.getText()));
-                    catenaryPanel.setCatenaryLength(Double.parseDouble(widthText.getText()));
+                    width = Double.parseDouble(widthText.getText());
+                    cycloidPanel.setCycloidWidth(width);
+                    catenaryPanel.setCatenaryLength(width);
                     if (redrawEnabled) {
                         cycloidPanel.repaint();
                         catenaryPanel.repaint();
                     }
-                    width = Double.parseDouble(widthText.getText());
+                    if (widthSlider != null) widthSlider.setValue((int)(width*100));
                 }
                 if (autoFileNameEnabled) {
                     generateFileName();
                 }
+                widthTextModified = false;
             }
             public void changedUpdate(DocumentEvent e) {}
             });
@@ -197,45 +253,77 @@ class CycloidPanel extends JPanel {
         heightText = new JTextField(6);
         heightText.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
-                cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
+                heightTextModified = true;
+                height = Double.parseDouble(heightText.getText());
+                cycloidPanel.setCycloidHeight(height);
+                catenaryPanel.setCatenaryDepth(height);
                 if (redrawEnabled) {
                     cycloidPanel.repaint();
                     catenaryPanel.repaint();
                 }
-                height = Double.parseDouble(heightText.getText());
+                if (heightSlider != null) heightSlider.setValue((int)(height*100));
                 if (autoFileNameEnabled) {
                     generateFileName();
                 }
+                heightTextModified = false;
             }
             public void removeUpdate(DocumentEvent e) {
+                heightTextModified = true;
                 if (heightText.getText().length() == 0) {
                     cycloidPanel.setCycloidHeight(0.00);
                     catenaryPanel.setCatenaryDepth(0.00);
                     height = 0.00d;
+                    if (heightSlider != null) heightSlider.setValue(0);
                 } else {
-                    cycloidPanel.setCycloidHeight(Double.parseDouble(heightText.getText()));
-                    catenaryPanel.setCatenaryDepth(Double.parseDouble(heightText.getText()));
+                    height = Double.parseDouble(heightText.getText());
+                    cycloidPanel.setCycloidHeight(height);
+                    catenaryPanel.setCatenaryDepth(height);
                     if (redrawEnabled) {
                         cycloidPanel.repaint();
                         catenaryPanel.repaint();
                     }
-                    height = Double.parseDouble(heightText.getText());
+                    if (heightSlider != null) heightSlider.setValue((int)(height*100));
                 }
                 if (autoFileNameEnabled) {
                     generateFileName();
                 }
+                heightTextModified = false;
             }
             public void changedUpdate(DocumentEvent e) {}
             });
         heightText.setText("20.00");
         heightPanel.add(heightText);
 
+        widthSlider = new JSlider(JSlider.HORIZONTAL, 0, 100000, 20000);
+        widthSlider.setMajorTickSpacing(100);
+        widthSlider.setMinorTickSpacing(1);
+        widthSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent evt) {
+                JSlider s = (JSlider)evt.getSource();
+                if (!widthTextModified && !metricModified) widthText.setText(Double.toString((double)s.getValue()/100));
+            }
+            });
+        heightSlider = new JSlider(JSlider.HORIZONTAL, 0, 25000, 2000);
+        heightSlider.setMajorTickSpacing(100);
+        heightSlider.setMinorTickSpacing(1);
+        heightSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent evt) {
+                JSlider s = (JSlider)evt.getSource();
+                if (!heightTextModified && !metricModified) heightText.setText(Double.toString((double)s.getValue()/100));
+            }
+            });
+
+        JPanel slPanel = new JPanel(new BorderLayout());
+        slPanel.add(widthSlider, BorderLayout.NORTH);
+        slPanel.add(heightSlider, BorderLayout.SOUTH);
         JPanel whPanel = new JPanel(new BorderLayout());
         whPanel.add(widthPanel, BorderLayout.NORTH);
         whPanel.add(heightPanel, BorderLayout.SOUTH);
 
         topLeftPanel.add(whPanel, BorderLayout.SOUTH);
+
+        JPanel topCenterPanel = new JPanel(new BorderLayout());
+        topCenterPanel.add(slPanel, BorderLayout.SOUTH);
 
         JPanel topRightPanel = new JPanel(new BorderLayout());
 
@@ -519,6 +607,7 @@ class CycloidPanel extends JPanel {
 
         // top panel -> topleft/topright/settings panels
         topPanel.add(topLeftPanel, BorderLayout.WEST);
+        topPanel.add(topCenterPanel, BorderLayout.CENTER);
         topPanel.add(topRightPanel, BorderLayout.EAST);
         topPanel.add(settingsPanel, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.SOUTH);
