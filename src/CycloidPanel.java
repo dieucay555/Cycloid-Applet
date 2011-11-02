@@ -161,7 +161,6 @@ class CycloidPanel extends JPanel {
                         widthSlider.setMaximum(4000);
                         widthSlider.setMajorTickSpacing(10);
                         widthSlider.setMinorTickSpacing(1);
-                        titleText.setText(Integer.toString((int)(width*100)));
                         widthSlider.setValue((int)(width*100));
                         metricModified = false;
                     }
